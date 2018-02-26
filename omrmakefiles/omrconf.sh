@@ -1,6 +1,6 @@
 #!/bin/sh
 ###############################################################################
-# Copyright (c) 2015, 2015 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@ ${OMRDIR}/lib/libomrgcverbosehandlerstandard.a \
 ${OMRDIR}/lib/libomrgcbase.a \
 ${OMRDIR}/lib/libomrgcstats.a \
 ${OMRDIR}/lib/libomrgcstructs.a \
+${OMRDIR}/lib/libomrgcrealtime.a \
 ${OMRDIR}/lib/libj9hookstatic.a \
 ${OMRDIR}/lib/libj9thrstatic.a \
 ${OMRDIR}/lib/libj9prtstatic.a \

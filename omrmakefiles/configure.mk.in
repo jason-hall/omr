@@ -245,6 +245,10 @@ OMRGC_IPATH = \
   $(top_srcdir)/gc/stats \
   $(top_srcdir)/gc/structs
 
+ifeq (1,$(OMR_GC_REALTIME))
+OMRGC_IPATH += $(top_srcdir)/gc/realtime
+endif
+
 ifeq (1,$(OMR_GC_SEGREGATED_HEAP))
 OMRGC_IPATH += $(top_srcdir)/gc/base/segregated
 endif
@@ -252,3 +256,4 @@ endif
 ifeq (1,$(OMR_GC_VLHGC))
 OMRGC_IPATH += $(top_srcdir)/gc/base/vlhgc
 endif
+

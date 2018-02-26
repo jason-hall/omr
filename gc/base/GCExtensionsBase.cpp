@@ -269,6 +269,13 @@ MM_GCExtensionsBase::tearDown(MM_EnvironmentBase* env)
 		(*tmpOmrHookInterface)->J9HookShutdownInterface(tmpOmrHookInterface);
 		*tmpOmrHookInterface = NULL; /* avoid issues with double teardowns */
 	}
+
+#if defined(OMR_GC_REALTIME)
+	if (_omrVM->_gcCycleOnMonitor) {
+		omrthread_monitor_destroy(_omrVM->_gcCycleOnMonitor);
+		_omrVM->_gcCycleOnMonitor = (omrthread_monitor_t)NULL;
+	}
+#endif /* defined(OMR_GC_REALTIME) */
 }
 
 bool

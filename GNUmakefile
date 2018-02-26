@@ -133,6 +133,10 @@ main_targets += \
   gc/verbose/handler_standard
 test_targets += fvtest/gctest
 test_targets += perftest/gctest
+ifeq (1,$(OMR_GC_REALTIME))
+main_targets += \
+  gc/realtime
+endif
 endif
 
 # Omrsig Targets

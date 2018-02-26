@@ -110,6 +110,8 @@ class HeapRegionStateTable;
 #define LOCALGC_ESTIMATE_FRAGMENTATION 		0x1
 #define GLOBALGC_ESTIMATE_FRAGMENTATION 	0x2
 
+#define J9_FINALIZABLE_INTERVAL -2
+
 enum ExcessiveLevel {
 	excessive_gc_normal = 0,
 	excessive_gc_aggressive,
@@ -789,6 +791,10 @@ public:
 	MUTEX memcheckHashTableMutex;
 #endif /* defined(OMR_VALGRIND_MEMCHECK) */
 
+#if defined(OMR_GC_REALTIME)
+	bool realtimeEnabled;
+#endif /* defined(OMR_GC_REALTIME) */
+
 	/* Function Members */
 private:
 
@@ -822,6 +828,7 @@ public:
 	 * @return Pointer to the base extensions.
 	 */
 	MMINLINE static MM_GCExtensionsBase* getExtensions(OMR_VM* omrVM) { return (MM_GCExtensionsBase*)omrVM->_gcOmrVMExtensions; }
+	MMINLINE static MM_GCExtensionsBase* getExtensions(OMR_VMThread* omrVMThread) { return static_cast<MM_GCExtensionsBase*>(MM_GCExtensionsBase::getExtensions(omrVMThread->_vm)); }
 
 	MMINLINE OMR_VM* getOmrVM() { return _omrVM; }
 	MMINLINE void setOmrVM(OMR_VM* omrVM) { _omrVM = omrVM; }
@@ -1287,6 +1294,15 @@ public:
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 	}
 
+	MMINLINE UDATA getDynamicMaxSoftReferenceAge()
+	{
+		return 0;
+	}
+
+	MMINLINE UDATA getMaxSoftReferenceAge()
+	{
+		return 0;
+	}
 
 	MM_GCExtensionsBase()
 		: MM_BaseVirtual()
@@ -1752,6 +1768,9 @@ public:
 		, valgrindMempoolAddr(0)
 		, memcheckHashTable(NULL)
 #endif /* defined(OMR_VALGRIND_MEMCHECK) */
+#if defined(OMR_GC_REALTIME)
+		, realtimeEnabled(false)
+#endif /* defined(OMR_GC_REALTIME) */
 	{
 		_typeId = __FUNCTION__;
 	}

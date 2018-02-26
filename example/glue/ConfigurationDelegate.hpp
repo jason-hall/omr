@@ -28,6 +28,7 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
+#include "omrExampleVM.hpp"
 
 class MM_HeapRegionDescriptor;
 
@@ -62,6 +63,9 @@ public:
 	bool
 	initialize(MM_EnvironmentBase* env, MM_GCWriteBarrierType writeBarrierType, MM_GCAllocationType allocationType)
 	{
+#if defined(OMR_GC_SEGREGATED_HEAP)
+		((OMR_VM_Example *)(env->getOmrVM()->_language_vm))->_sizeClasses = (OMR_SizeClasses *)env->getForge()->allocate(sizeof(OMR_SizeClasses), OMR::GC::AllocationCategory::FIXED, OMR_GET_CALLSITE());
+#endif /* defined(OMR_GC_SEGREGATED_HEAP) */
 		return true;
 	}
 
@@ -72,6 +76,9 @@ public:
 	void
 	tearDown(MM_EnvironmentBase* env)
 	{
+#if defined(OMR_GC_SEGREGATED_HEAP)
+		env->getForge()->free(((OMR_VM_Example *)(env->getOmrVM()->_language_vm))->_sizeClasses);
+#endif /* defined(OMR_GC_SEGREGATED_HEAP) */
 		return;
 	}
 
@@ -134,7 +141,7 @@ public:
 #if defined(OMR_GC_SEGREGATED_HEAP)
 	OMR_SizeClasses *getSegregatedSizeClasses(MM_EnvironmentBase *env)
 	{
-		return NULL;
+		return ((OMR_VM_Example *)(env->getOmrVM()->_language_vm))->_sizeClasses;
 	}
 #endif /* defined(OMR_GC_SEGREGATED_HEAP) */
 

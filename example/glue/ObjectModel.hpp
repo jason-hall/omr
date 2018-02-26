@@ -31,6 +31,11 @@
 #include "ObjectModelBase.hpp"
 #include "ObjectModelDelegate.hpp"
 
+#if defined(OMR_GC_REALTIME)
+/* this bit is set in the object header slot if an overflow condition is raised */
+#define GC_OVERFLOW	 0x4
+#endif /* defined(OMR_GC_REALTIME) */
+
 class MM_GCExtensionsBase;
 
 /**
@@ -68,10 +73,87 @@ public:
 	virtual void tearDown(MM_GCExtensionsBase *extensions) {}
 
 	/**
+	 * Set size in object header, with header flags.
+	 * @param objectPtr Pointer to an object
+	 * @param size consumed size in bytes of object
+	 * @param flags flag bits to set
+	 */
+	MMINLINE void
+	setObjectSizeAndFlags(omrobjectptr_t objectPtr, uintptr_t size, uintptr_t flags)
+	{
+		uintptr_t sizeBits = size << OMR_OBJECT_METADATA_FLAGS_BIT_COUNT;
+		uintptr_t flagsBits = flags & (uintptr_t)OMR_OBJECT_METADATA_FLAGS_MASK;
+		*(getObjectHeaderSlotAddress(objectPtr)) = (fomrobject_t)(sizeBits | flagsBits);
+	}
+
+	/**
+	 * Set size in object header, preserving header flags
+	 * @param objectPtr Pointer to an object
+	 * @param size consumed size in bytes of object
+	 */
+	MMINLINE void
+	setObjectSize(omrobjectptr_t objectPtr, uintptr_t size)
+	{
+		setObjectSizeAndFlags(objectPtr, size, getObjectFlags(objectPtr));
+	}
+
+#if defined(OMR_GC_REALTIME)
+	MMINLINE bool
+	atomicSetOverflowBit(omrobjectptr_t objectPtr)
+	{
+		return atomicSetObjectFlags(objectPtr, 0, GC_OVERFLOW);
+	}
+
+	MMINLINE bool
+	atomicClearOverflowBit(omrobjectptr_t objectPtr)
+	{
+		return atomicSetObjectFlags(objectPtr, GC_OVERFLOW, 0);
+	}
+
+	MMINLINE bool
+	isOverflowBitSet(omrobjectptr_t objectPtr)
+	{
+		return (GC_OVERFLOW == (getObjectFlags(objectPtr) & GC_OVERFLOW));
+	}
+#endif /* defined(OMR_GC_REALTIME) */
+
+	MMINLINE bool
+	isObjectArray(omrobjectptr_t objectPtr)
+	{
+		return false;
+	}
+
+	/**
 	 * Constructor.
 	 */
 	GC_ObjectModel()
 		: GC_ObjectModelBase()
 	{}
+
+	/**
+	* Return values for getScanType().
+	*/
+	enum ScanType {
+		SCAN_INVALID_OBJECT = 0,
+		SCAN_MIXED_OBJECT = 1,
+		SCAN_POINTER_ARRAY_OBJECT = 2,
+		SCAN_PRIMITIVE_ARRAY_OBJECT = 3,
+		SCAN_REFERENCE_MIXED_OBJECT = 4,
+		SCAN_CLASS_OBJECT = 5,
+		SCAN_CLASSLOADER_OBJECT = 6,
+		SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT = 7,
+		SCAN_OWNABLESYNCHRONIZER_OBJECT = 8,
+	};
+
+	/**
+	 * Determine the ScanType code for objects of the specified class. This code determines how instances should be scanned.
+	 * @param clazz[in] the class of the object to be scanned
+	 * @return a ScanType code, SCAN_INVALID_OBJECT if the code cannot be determined due to an error
+	 */
+	MMINLINE ScanType
+	getScanType(omrobjectptr_t objectPtr)
+	{
+		return SCAN_INVALID_OBJECT;
+	}
 };
 #endif /* OBJECTMODEL_HPP_ */

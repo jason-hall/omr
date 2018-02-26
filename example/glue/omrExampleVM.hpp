@@ -34,6 +34,9 @@ typedef struct OMR_VM_Example {
 	omrthread_t self;
 	omrthread_rwmutex_t _vmAccessMutex;
 	volatile uintptr_t _vmExclusiveAccessCount;
+#if defined(OMR_GC_SEGREGATED_HEAP)
+	OMR_SizeClasses *_sizeClasses;
+#endif /* defined(OMR_GC_SEGREGATED_HEAP) */
 } OMR_VM_Example;
 
 typedef struct RootEntry {

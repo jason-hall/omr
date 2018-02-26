@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2015, 2016 IBM Corp. and others
+# Copyright (c) 2015, 2019 IBM Corp. and others
 # 
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,6 +46,10 @@ OMRGC_IPATH = \
   $(OMRDIR)/gc/verbose/handler_standard \
   $(OMRDIR)/gc/stats \
   $(OMRDIR)/gc/structs
+
+ifeq (1,$(OMR_GC_REALTIME))
+OMRGC_IPATH += $(top_srcdir)/gc/realtime
+endif
 
 # Public Core OMR header files
 OMRINCLUDECORE = $(addprefix -I,$(OMR_IPATH))

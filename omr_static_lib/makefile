@@ -63,6 +63,9 @@ OMRLIBS += \
 ifeq (1,$(OMR_GC_SEGREGATED))
 OMRLIBS += $(top_srcdir)/gc/base/segregated
 endif
+ifeq (1,$(OMR_GC_REALTIME))
+OMRLIBS += $(top_srcdir)/gc/realtime
+endif
 endif
 
 # Prepend the path to the library for relative paths.

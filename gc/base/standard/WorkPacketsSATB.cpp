@@ -40,7 +40,7 @@ MM_WorkPacketsSATB::newInstance(MM_EnvironmentBase *env)
 {
 	MM_WorkPacketsSATB *workPackets;
 	
-	workPackets = (MM_WorkPacketsSATB *)env->getForge()->allocate(sizeof(MM_WorkPacketsSATB), MM_AllocationCategory::WORK_PACKETS, J9_GET_CALLSITE());
+	workPackets = (MM_WorkPacketsSATB *)env->getForge()->allocate(sizeof(MM_WorkPacketsSATB), MM_AllocationCategory::WORK_PACKETS, OMR_GET_CALLSITE());
 	if (workPackets) {
 		new(workPackets) MM_WorkPacketsSATB(env);
 		if (!workPackets->initialize(env)) {
