@@ -50,6 +50,10 @@
 #define OMR_XGCBUFFERED_LOGGING_LENGTH 20
 #define OMR_XGCTHREADS "-Xgcthreads"
 #define OMR_XGCTHREADS_LENGTH 11
+#if defined(OMR_GC_REALTIME)
+#define OMR_GCPOLICY_REALTIME "realtime"
+#define OMR_GCPOLICY_REALTIME_LENGTH 8
+#endif /* defined(OMR_GC_REALTIME) */
 
 uintptr_t
 MM_StartupManager::getUDATAValue(char *option, uintptr_t *outputValue)
@@ -287,6 +291,17 @@ MM_StartupManager::handleOption(MM_GCExtensionsBase *extensions, char *option)
 		}
 	}
 #endif /* defined(OMR_GC_MORDON_SCAVENGER) */
+#if defined(OMR_GC_REALTIME)
+	else if (0 == strncmp(option, OMR_XGCPOLICY, OMR_XGCPOLICY_LENGTH)) {
+		char *gcpolicy = option + OMR_XGCPOLICY_LENGTH;
+		if (0 == strncmp(gcpolicy, OMR_GCPOLICY_REALTIME, OMR_GCPOLICY_REALTIME_LENGTH)) {
+			/* this is disabled by default -- enable metronome here */
+			extensions->realtimeEnabled = true;
+		} else {
+			result = false;
+		}
+	}
+#endif /* defined(OMR_GC_REALTIME) */
 	else if (0 == strncmp(option, OMR_XGCTHREADS, OMR_XGCTHREADS_LENGTH)) {
 		uintptr_t forcedThreadCount = 0;
 		if (0 >= getUDATAValue(option + OMR_XGCTHREADS_LENGTH, &forcedThreadCount)) {

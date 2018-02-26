@@ -91,7 +91,13 @@ MM_StartupManagerTestExample::parseLanguageOptions(MM_GCExtensionsBase *extensio
 #else
 						gcTestEnv->log(LEVEL_ERROR, "WARNING: GCPolicy=gencon ignored, requires OMR_GC_MODRON_SCAVENGER (see configure_common.mk)\n");
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
-					} else  if (0 != j9_cmdla_stricmp(attr.value(), "optavgpause")) {
+					} else if (0 == j9_cmdla_stricmp(attr.value(), "realtime")) {
+#if defined(OMR_GC_REALTIME)
+						extensions->realtimeEnabled = true;
+#else
+						gcTestEnv->log(LEVEL_ERROR, "WARNING: GCPolicy=realtime ignored, requires OMR_GC_REALTIME (see configure_common.mk)\n");
+#endif /* defined(OMR_GC_REALTIME) */
+					} else if (0 != j9_cmdla_stricmp(attr.value(), "optavgpause")) {
 						gcTestEnv->log(LEVEL_ERROR, "Failed: Unrecognized GC policy (expected gencon or optavgpause): %s\n", attr.value());
 						result = false;
 					}

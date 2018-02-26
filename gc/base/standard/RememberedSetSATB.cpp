@@ -44,7 +44,7 @@ MM_RememberedSetSATB::newInstance(MM_EnvironmentBase *env, MM_WorkPacketsSATB *w
 {
 	MM_RememberedSetSATB *rememberedSet;
 	
-	rememberedSet = (MM_RememberedSetSATB *)env->getForge()->allocate(sizeof(MM_RememberedSetSATB), MM_AllocationCategory::WORK_PACKETS, J9_GET_CALLSITE());
+	rememberedSet = (MM_RememberedSetSATB *)env->getForge()->allocate(sizeof(MM_RememberedSetSATB), MM_AllocationCategory::WORK_PACKETS, OMR_GET_CALLSITE());
 	if (NULL != rememberedSet) {
 		new(rememberedSet) MM_RememberedSetSATB(env, workPackets);
 		if (!rememberedSet->initialize(env)) {

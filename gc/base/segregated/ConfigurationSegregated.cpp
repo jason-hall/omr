@@ -80,11 +80,11 @@ MM_ConfigurationSegregated::initialize(MM_EnvironmentBase *env)
 
 	bool success = false;
 
-	/* OMRTODO investigate why these must be equal or it segfaults. */
-	MM_GCExtensionsBase *extensions = env->getExtensions();
-	extensions->splitAvailableListSplitAmount = extensions->gcThreadCount;
-
 	if (MM_Configuration::initialize(env)) {
+		/* OMRTODO investigate why these must be equal or it segfaults. */
+		MM_GCExtensionsBase *extensions = env->getExtensions();
+		extensions->splitAvailableListSplitAmount = extensions->gcThreadCount;
+
 		env->getOmrVM()->_sizeClasses = _delegate.getSegregatedSizeClasses(env);
 		if (NULL != env->getOmrVM()->_sizeClasses) {
 			extensions->setSegregatedHeap(true);

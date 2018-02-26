@@ -54,6 +54,7 @@ const char *gcTests[] = {"fvtest/gctest/configuration/sample_GC_config.xml"
                         , "fvtest/gctest/configuration/gencon_GC_config.xml"
                         , "fvtest/gctest/configuration/gencon_GC_backout_config.xml"
 #endif
+			, "fvtest/gctest/configuration/realtime_GC_config.xml"};
                         };
 
 const char *perfTests[] = {"perftest/gctest/configuration/21645_core.20150126.202455.11862202.0001.xml",

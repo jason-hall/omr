@@ -43,6 +43,18 @@ public:
 	}
 
 	void tearDown(MM_GCExtensionsBase *extensions) {}
+
+	/**
+	 * Returns the size of a mixed object, in bytes, including the header.
+	 * @param objectPtr Pointer to the object whose size is required
+	 * @return Size of object in bytes including the header
+	 */
+	MMINLINE UDATA
+	getSizeInBytesWithHeader(omrobjectptr_t objectPtr)
+	{
+		Assert_MM_unimplemented();
+		return 0;
+	}
 };
 
 #endif /* MIXEDOBJECTMODEL_HPP_ */

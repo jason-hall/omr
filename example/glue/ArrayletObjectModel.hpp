@@ -25,6 +25,7 @@
 #include "omrcfg.h"
 #include "ModronAssertions.h"
 
+
 #if defined(OMR_GC_ARRAYLETS)
 
 class MM_GCExtensionsBase;
@@ -49,13 +50,25 @@ public:
 	MMINLINE fomrobject_t *
 	getArrayoidPointer(omrarrayptr_t arrayPtr)
 	{
-		return (fomrobject_t *) NULL;
+		return (fomrobject_t *)NULL;
 	}
 
 	MMINLINE void
 	expandArrayletSubSpaceRange(MM_MemorySubSpace * subSpace, void * rangeBase, void * rangeTop, uintptr_t largestDesirableArraySpineSize)
 	{
 		/* No-op */
+	}
+
+	/**
+	 * Returns the address of first data slot in the array
+	 * @param arrayPtr Ptr to an array
+	 * @return Address of first data slot in the array
+	 */
+	MMINLINE void *
+	getDataPointerForContiguous(omrarrayptr_t arrayPtr)
+	{
+		Assert_MM_unimplemented();
+		return NULL;
 	}
 	
 	/**
@@ -69,6 +82,7 @@ public:
 		Assert_MM_unimplemented();
 		return 0;
 	}
+
 #if defined(OMR_GC_ENABLE_DOUBLE_MAP)
 	MMINLINE bool
 	isDoubleMappingEnabled()
@@ -77,6 +91,43 @@ public:
 	}
 #endif // OMR_GC_ENABLE_DOUBLE_MAP
 
+	/**
+	 * Returns the size of an indexable object in elements.
+	 * @param arrayPtr Pointer to the indexable object whose size is required
+	 * @return Size of object in elements
+	 */
+	MMINLINE UDATA
+	getSizeInElements(omrobjectptr_t arrayPtr)
+	{
+		Assert_MM_unimplemented();
+		return 0;
+	}
+
+	/**
+	 * Return the total number of arraylets for the given indexable object
+	 * @param objPtr Pointer to an array object
+	 * @return the number of arraylets used for an array of dataSizeInBytes bytes
+	 */
+	MMINLINE UDATA
+	numArraylets(omrarrayptr_t objPtr)
+	{
+		Assert_MM_unimplemented();
+		return 0;
+	}
+
+	MMINLINE UDATA
+	numArraylets(UDATA unadjustedDataSizeInBytes)
+	{
+		Assert_MM_unimplemented();
+		return 0;
+	}
+
+	MMINLINE UDATA
+	arrayletSize(omrarrayptr_t objPtr, UDATA index)
+	{
+		Assert_MM_unimplemented();
+		return 0;
+	}
 };
 
 #endif /*OMR_GC_ARRAYLETS */

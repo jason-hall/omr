@@ -322,6 +322,33 @@ if(OMR_GC_SEGREGATED_HEAP)
 	)
 endif()
 
+if(OMR_GC_REALTIME)
+	target_sources(omrgcrealtime
+		PRIVATE
+			realtime/AllocationContextRealtime.cpp
+			realtime/ConfigurationRealtime.cpp
+			realtime/EnvironmentRealtime.cpp
+			realtime/GlobalAllocationManagerRealtime.cpp
+			realtime/HeapRegionDescriptorRealtime.cpp
+			realtime/IncrementalOverflow.cpp
+			realtime/IncrementalParallelTask.cpp
+			realtime/MemorySubSpaceMetronome.cpp
+			realtime/MetronomeAlarm.cpp
+			realtime/OSInterface.cpp
+			realtime/OwnableSynchronizerObjectBufferRealtime.cpp
+			realtime/ProcessorInfo.cpp
+			realtime/RealtimeGC.cpp
+			realtime/RealtimeSweepTask.cpp
+			realtime/RememberedSetWorkPackets.cpp
+			realtime/Scheduler.cpp
+			realtime/SweepSchemeRealtime.cpp
+			realtime/Timer.cpp
+			realtime/UtilizationTracker.cpp
+			realtime/WorkPacketsRealtime.cpp
+			realtime/YieldCollaborator.cpp
+	)
+endif()
+
 add_dependencies(omrgc omrgc_hookgen)
 
 if(OMR_WARNINGS_AS_ERRORS)
@@ -345,6 +372,7 @@ target_include_directories(omrgc
 		structs
 		verbose
 		verbose/handler_standard
+		realtime
 	INTERFACE
 		$<TARGET_PROPERTY:${OMR_GC_GLUE_TARGET},INTERFACE_INCLUDE_DIRECTORIES>
 )
