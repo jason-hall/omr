@@ -84,7 +84,7 @@ public:
 	MMINLINE void
 	collectCollectionStatistics(MM_EnvironmentBase *env, MM_CollectionStatisticsVLHGC *stats)
 	{
-		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+		MM_GCExtensionsBase *extensions =  env->getExtensions();
 
 		stats->_totalHeapSize = extensions->heap->getActiveMemorySize();
 		stats->_totalFreeHeapSize = extensions->heap->getApproximateFreeMemorySize();

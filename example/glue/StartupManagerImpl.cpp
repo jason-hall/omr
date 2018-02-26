@@ -27,6 +27,9 @@
 #if defined(OMR_GC_SEGREGATED_HEAP)
 #include "ConfigurationSegregated.hpp"
 #endif /* defined(OMR_GC_SEGREGATED_HEAP) */
+#if defined(OMR_GC_REALTIME)
+#include "ConfigurationStaccato.hpp"
+#endif /* defined(OMR_GC_REALTIME) */
 #include "ConfigurationFlat.hpp"
 #include "MarkingScheme.hpp"
 #include "VerboseManagerImpl.hpp"
@@ -83,6 +86,11 @@ MM_StartupManagerImpl::createConfiguration(MM_EnvironmentBase *env)
 #if defined(OMR_GC_MODRON_SCAVENGER)
 	MM_GCExtensionsBase *ext = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 #endif /* defined(OMR_GC_MODRON_SCAVENGER) */
+#if defined(OMR_GC_REALTIME)
+	if (ext->realtimeEnabled) {
+		return MM_ConfigurationStaccato::newInstance(env);
+	} else
+#endif /* defined(OMR_GC_REALTIME) */
 #if defined(OMR_GC_SEGREGATED_HEAP)
 	if (_useSegregatedGC) {
 		return MM_ConfigurationSegregated::newInstance(env);

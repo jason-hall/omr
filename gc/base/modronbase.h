@@ -53,5 +53,18 @@
 #define J9_GC_SINGLE_SLOT_HOLE 0x3
 #endif
 
+#if defined(OMR_GC_STACCATO)
+/* Note that the "reserved" index is used for 2 different purposes with the
+ * staccatoRememberedSet:
+ * 1) As a per-thread flag indicating the double barrier is on.
+ * 2) As a global flag indicating the barrier is disabled.
+ * 
+ * If the global or local fragment indexes must be preserved for any other
+ * reason and the JIT relies on the (localFragmentIndex == globalFragmentIndex)
+ * check, we must ensure that both indexes aren't preserved at the same time.
+ */
+#define J9GC_REMEMBERED_SET_RESERVED_INDEX 0
+#endif /* OMR_GC_STACCATO */
+
 #endif /* MODRONBASE_H_ */
 

@@ -212,7 +212,7 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::expand(MM_EnvironmentBase *env, uintp
 	bool debug = extensions->debugDynamicNewSpaceSizing;
 	OMRPORT_ACCESS_FROM_OMRPORT(env->getPortLibrary());
 
-	assume0(expandSize == MM_Math::roundToCeiling(MM_GCExtensions::getExtensions(env)->heapAlignment, expandSize));  /* expand requests must be aligned */
+	assume0(expandSize == MM_Math::roundToCeiling(MM_GCExtensionsBase::getExtensions(env)->heapAlignment, expandSize));  /* expand requests must be aligned */
 
 	if(debug) {
 		omrtty_printf("New space expand:\n");
@@ -1493,7 +1493,7 @@ MM_PhysicalSubArenaVirtualMemorySemiSpace::checkCounterBalanceExpand(MM_Environm
 	assume0(adjustedExpandSize == calculateExpansionSplit(env, adjustedExpandSize, &allocateSpaceSize, &survivorSpaceSize));
 
 	/* Found a valid expand size, return */
-	assume0(0 == (adjustedExpandSize % MM_GCExtensions::getExtensions(env)->heapAlignment));
+	assume0(0 == (adjustedExpandSize % MM_GCExtensionsBase::getExtensions(env)->heapAlignment));
 	return adjustedExpandSize;
 }
 

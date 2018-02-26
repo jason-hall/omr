@@ -29,7 +29,6 @@
 #define COMPACTVLHGCSTATS_HPP_
 
 #include "omrcfg.h"
-#include "j9modron.h"
 #include "modronbase.h"
 
 #if defined(OMR_GC_VLHGC)

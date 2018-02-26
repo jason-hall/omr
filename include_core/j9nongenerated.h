@@ -212,4 +212,18 @@ typedef struct J9MemorySegmentList {
 	uintptr_t flags;
 } J9MemorySegmentList;
 
+typedef struct J9VMGCRememberedSet {
+	UDATA globalFragmentIndex;
+	UDATA preservedGlobalFragmentIndex;
+} J9VMGCRememberedSet;
+
+typedef struct J9VMGCRememberedSetFragment {
+	UDATA** fragmentAlloc;
+	UDATA** fragmentTop;
+	void* fragmentStorage;
+	UDATA localFragmentIndex;
+	UDATA preservedLocalFragmentIndex;
+	struct J9VMGCRememberedSet* fragmentParent;
+} J9VMGCRememberedSetFragment;
+
 #endif /* j9nongenerated_h */

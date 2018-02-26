@@ -47,6 +47,14 @@ OMRGC_IPATH = \
   $(OMRDIR)/gc/stats \
   $(OMRDIR)/gc/structs
 
+ifeq (1,$(OMR_GC_REALTIME))
+OMRGC_IPATH += $(top_srcdir)/gc/realtime
+endif
+
+ifeq (1,$(OMR_GC_STACCATO))
+OMRGC_IPATH += $(top_srcdir)/gc/staccato
+endif
+
 # Public Core OMR header files
 OMRINCLUDECORE = $(addprefix -I,$(OMR_IPATH))
 

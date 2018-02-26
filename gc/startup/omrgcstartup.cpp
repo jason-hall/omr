@@ -64,11 +64,6 @@ collectorCreationHelper(OMR_VM *omrVM, MM_EnvironmentBase *env)
 	} else {
 		globalCollector->setGlobalCollector(true);
 		extensions->setGlobalCollector(globalCollector);
-
-		if (!extensions->getGlobalCollector()->collectorStartup(extensions)) {
-			omrtty_printf("Failed to start global collector.\n");
-			rc = OMR_ERROR_INTERNAL;
-		}
 	}
 
 	return rc;
@@ -139,7 +134,7 @@ heapCreationHelper(OMR_VM *omrVM, MM_StartupManager *startupManager, bool create
 	}
 
 	/* Initialize statistic locks */
-	if (0 != omrthread_monitor_init_with_name(&extensions->gcStatsMutex, 0, "MM_GCExtensions::gcStats")) {
+	if (0 != omrthread_monitor_init_with_name(&extensions->gcStatsMutex, 0, "MM_GCExtensionsBase::gcStats")) {
 		omrtty_printf("Failed to create GC statistics mutex.\n");
 		rc = OMR_ERROR_INTERNAL;
 		goto done;
@@ -179,6 +174,12 @@ heapCreationHelper(OMR_VM *omrVM, MM_StartupManager *startupManager, bool create
 
 	extensions->configuration->defaultMemorySpaceAllocated(extensions, memorySpace);
 	extensions->heap->setDefaultMemorySpace(memorySpace);
+
+	if (createCollector && !extensions->getGlobalCollector()->collectorStartup(extensions)) {
+		omrtty_printf("Failed to start global collector.\n");
+		rc = OMR_ERROR_INTERNAL;
+		goto done;
+	}
 
 	if (startupManager->isVerboseEnabled()) {
 		extensions->verboseGCManager = startupManager->createVerboseManager(&envBase);
@@ -251,19 +252,27 @@ OMR_GC_InitializeCollector(OMR_VMThread* omrVMThread)
 	if (OMR_ERROR_NONE != collectorCreationHelper(omrVMThread->_vm, env)) {
 		rc = OMR_ERROR_INTERNAL;
 	} else {
+		OMRPORT_ACCESS_FROM_OMRVM(omrVMThread->_vm);
 		MM_Collector *globalCollector = extensions->getGlobalCollector();
 		MM_Heap *heap = env->getMemorySpace()->getHeap();
 
-		/* We now need to inform the existing subspaces about the new collector */
-		MM_HeapMemorySubSpaceIterator iter(heap);
-		MM_MemorySubSpace *subspace = NULL;
-		while (NULL != (subspace = iter.nextSubSpace())) {
-			subspace->setCollector(globalCollector);
-			MM_MemoryPool *pool = subspace->getMemoryPool();
-			/* Setup sweep pool manager which requires a collector */
-			if (NULL != pool && !pool->initializeSweepPool(env)) {
-				rc = OMR_ERROR_INTERNAL;
-				break;
+		if (!globalCollector->collectorStartup(extensions)) {
+			omrtty_printf("Failed to start global collector.\n");
+			rc = OMR_ERROR_INTERNAL;
+		}
+
+		if (OMR_ERROR_NONE == rc) {
+			/* We now need to inform the existing subspaces about the new collector */
+			MM_HeapMemorySubSpaceIterator iter(heap);
+			MM_MemorySubSpace *subspace = NULL;
+			while (NULL != (subspace = iter.nextSubSpace())) {
+				subspace->setCollector(globalCollector);
+				MM_MemoryPool *pool = subspace->getMemoryPool();
+				/* Setup sweep pool manager which requires a collector */
+				if (NULL != pool && !pool->initializeSweepPool(env)) {
+					rc = OMR_ERROR_INTERNAL;
+					break;
+				}
 			}
 		}
 

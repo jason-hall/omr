@@ -32,6 +32,8 @@ ${OMRDIR}/lib/libomrgcverbosehandlerstandard.a \
 ${OMRDIR}/lib/libomrgcbase.a \
 ${OMRDIR}/lib/libomrgcstats.a \
 ${OMRDIR}/lib/libomrgcstructs.a \
+${OMRDIR}/lib/libomrgcrealtime.a \
+${OMRDIR}/lib/libomrgcstaccato.a \
 ${OMRDIR}/lib/libj9hookstatic.a \
 ${OMRDIR}/lib/libj9thrstatic.a \
 ${OMRDIR}/lib/libj9prtstatic.a \

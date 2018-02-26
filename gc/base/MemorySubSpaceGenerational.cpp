@@ -293,7 +293,7 @@ MM_MemorySubSpaceGenerational::counterBalanceContract(
 		return contractSize;
 	}
 	expandSize = _minimumSize - (_currentSize - contractSize);
-	assume0(expandSize == MM_Math::roundToFloor(MM_GCExtensions::getExtensions(env)->heapAlignment, expandSize)); /* contract delta should be the same alignment as expand delta */
+	assume0(expandSize == MM_Math::roundToFloor(MM_GCExtensionsBase::getExtensions(env)->heapAlignment, expandSize)); /* contract delta should be the same alignment as expand delta */
 	
 	/* Find the space that needs to expand, and do it */
 	if(previousSubSpace == _memorySubSpaceNew) {

@@ -36,7 +36,6 @@
 #include "BaseVirtual.hpp"
 #include "EnvironmentBase.hpp"
 
-class MM_GCExtensions;
 class MM_GCExtensionsBase;
 struct J9PortVmemParams;
 

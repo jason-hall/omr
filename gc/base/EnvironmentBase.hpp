@@ -215,8 +215,8 @@ public:
 	MM_MemorySubSpace *getTenureMemorySubSpace();
 
 	/**
-	 * Get a pointer to the J9VMThread structure.
-	 * @return Pointer to the J9VMThread structure.
+	 * Get a pointer to the OMR_VMThread structure.
+	 * @return Pointer to the OMR_VMThread structure.
 	 */
 	MMINLINE OMR_VMThread *getOmrVMThread() { return _omrVMThread; }
 	

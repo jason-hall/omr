@@ -27,6 +27,7 @@ set(OMR_CORE_GLUE_TARGET "omr_example_core_glue" CACHE STRING "The core glue tar
 add_library(omr_example_gc_glue INTERFACE)
 
 target_sources(omr_example_gc_glue INTERFACE
+	${CMAKE_CURRENT_SOURCE_DIR}/BarrierSynchronization.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/CollectorLanguageInterfaceImpl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/CompactSchemeFixupObject.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ConcurrentMarkingDelegate.cpp
@@ -34,10 +35,21 @@ target_sources(omr_example_gc_glue INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/FrequentObjectsStats.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/GlobalCollectorDelegate.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/MarkingDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/MetronomeAlarmThread.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ObjectIterator.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/ObjectModelDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Profiling.c
+	${CMAKE_CURRENT_SOURCE_DIR}/RealtimeGCDelegate.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/RealtimeMarkingScheme.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/RealtimeMarkTask.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/RealtimeRootScanner.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/RootScanner.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/StackSlotValidator.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/StaccatoGCDelegate.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/StartupManagerImpl.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/VerboseManagerImpl.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/VMThreadIterator.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/VMThreadSlotIterator.cpp
 )
 
 target_link_libraries(omr_example_gc_glue
