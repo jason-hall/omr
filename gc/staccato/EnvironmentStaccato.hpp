@@ -28,7 +28,7 @@
 #include "Base.hpp"
 #include "EnvironmentRealtime.hpp"
 
-class MM_GCExtensions;
+class MM_GCExtensionsBase;
 
 class MM_EnvironmentStaccato : public MM_EnvironmentRealtime
 {

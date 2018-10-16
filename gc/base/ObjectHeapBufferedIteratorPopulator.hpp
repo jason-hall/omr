@@ -58,7 +58,7 @@ public:
 	/**
 	 * Populate the cache with more objects.
 	 *
-	 * @parm[out] cache - the cache array to be populated with J9Object pointers
+	 * @parm[out] cache - the cache array to be populated with fomrobject_t pointers
 	 * @parm[in] maxCount - the maximum number of objects to populate the cache with
 	 * @parm[in/out] state - a state struct which the receiver may use to record persistent information.
 	 * @return the number of objects written to the cache, or 0 if the iteration is finished

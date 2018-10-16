@@ -345,6 +345,72 @@ if(OMR_GC_REALTIME)
 	)
 endif()
 
+if(OMR_GC_VLHGC)
+	target_sources(omrvlhgc
+		PRIVATE
+			vlhgc/AllocationContextBalanced.cpp
+			vlhgc/AllocationContextTarok.cpp
+			vlhgc/CardListFlushTask.cpp
+			vlhgc/ClassLoaderRememberedSet.cpp
+			vlhgc/CollectionSetDelegate.cpp
+			vlhgc/CompactGroupManager.cpp
+			vlhgc/CompactGroupPersistentStats.cpp
+			vlhgc/CompressedCardTable.cpp
+			vlhgc/ConfigurationIncrementalGenerational.cpp
+			vlhgc/CopyForwardDelegate.cpp
+			vlhgc/CopyForwardGMPCardCleaner.cpp
+			vlhgc/CopyForwardNoGMPCardCleaner.cpp
+			vlhgc/CopyForwardScheme.cpp
+			vlhgc/CopyScanCacheChunkVLHGC.cpp
+			vlhgc/CopyScanCacheChunkVLHGCInHeap.cpp
+			vlhgc/CopyScanCacheListVLHGC.cpp
+			vlhgc/CopyScanCacheVLHGC.cpp
+			vlhgc/CycleStateVLHGC.cpp
+			vlhgc/EnvironmentVLHGC.cpp
+			vlhgc/GlobalAllocationManagerTarok.cpp
+			vlhgc/GlobalCollectionCardCleaner.cpp
+			vlhgc/GlobalCollectionNoScanCardCleaner.cpp
+			vlhgc/GlobalMarkCardCleaner.cpp
+			vlhgc/GlobalMarkCardScrubber.cpp
+			vlhgc/GlobalMarkDelegate.cpp
+			vlhgc/GlobalMarkingScheme.cpp
+			vlhgc/GlobalMarkNoScanCardCleaner.cpp
+			vlhgc/HeapRegionDataForAllocate.cpp
+			vlhgc/HeapRegionDataForCompactVLHGC.cpp
+			vlhgc/HeapRegionDescriptorVLHGC.cpp
+			vlhgc/HeapRegionManagerVLHGC.cpp
+			vlhgc/IncrementalCardTable.cpp
+			vlhgc/IncrementalGenerationalGC.cpp
+			vlhgc/InterRegionRememberedSet.cpp
+			vlhgc/MarkMapManager.cpp
+			vlhgc/MemorySubSpaceTarok.cpp
+			vlhgc/OwnableSynchronizerObjectBufferVLHGC.cpp
+			vlhgc/ParallelSweepSchemeVLHGC.cpp
+			vlhgc/PartialMarkDelegate.cpp
+			vlhgc/PartialMarkGMPCardCleaner.cpp
+			vlhgc/PartialMarkingScheme.cpp
+			vlhgc/PartialMarkNoGMPCardCleaner.cpp
+			vlhgc/ProjectedSurvivalCollectionSetDelegate.cpp
+			vlhgc/ReclaimDelegate.cpp
+			vlhgc/ReferenceObjectBufferVLHGC.cpp
+			vlhgc/RegionBasedOverflowVLHGC.cpp
+			vlhgc/RegionListTarok.cpp
+			vlhgc/RegionValidator.cpp
+			vlhgc/RememberedSetCardBucket.cpp
+			vlhgc/RememberedSetCardListBufferIterator.cpp
+			vlhgc/RememberedSetCardListCardIterator.cpp
+			vlhgc/RememberedSetCardList.cpp
+			vlhgc/RuntimeExecManager.cpp
+			vlhgc/SchedulingDelegate.cpp
+			vlhgc/SweepHeapSectioningVLHGC.cpp
+			vlhgc/SweepPoolManagerVLHGC.cpp
+			vlhgc/UnfinalizedObjectBufferVLHGC.cpp
+			vlhgc/VLHGCAccessBarrier.cpp
+			vlhgc/WorkPacketsVLHGC.cpp
+			vlhgc/WriteOnceCompactor.cpp
+	)
+endif()
+
 add_dependencies(omrgc omrgc_hookgen)
 
 if(OMR_WARNINGS_AS_ERRORS)

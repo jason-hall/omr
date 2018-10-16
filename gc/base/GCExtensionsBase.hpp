@@ -1077,7 +1077,7 @@ public:
 		_tenureSize = size;
 
 		/* todo: dagar move back to MemorySubSpaceGeneric addTenureRange() and removeTenureRange() once
-		 * heapBaseForBarrierRange0 heapSizeForBarrierRange0 can be removed from J9VMThread
+		 * heapBaseForBarrierRange0 heapSizeForBarrierRange0 can be removed from OMR_VMThread
 		 *
 		 * setTenureAddressRange() can be removed from GCExtensions.hpp and made inline again
 		 */

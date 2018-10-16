@@ -258,3 +258,7 @@ ifeq (1,$(OMR_GC_SEGREGATED_HEAP))
 OMRGC_IPATH += $(top_srcdir)/gc/base/segregated
 endif
 
+ifeq (1,$(OMR_GC_VLHGC))
+OMRGC_IPATH += $(top_srcdir)/gc/vlhgc
+endif
+

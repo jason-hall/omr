@@ -68,13 +68,13 @@ class MM_TLHAllocationSupport
 public:
 protected:
 private:
-	OMR_VMThread * const _omrVMThread; /**< J9VMThread from caller's environment */
+	OMR_VMThread * const _omrVMThread; /**< OMR_VMThread from caller's environment */
 	MM_LanguageThreadLocalHeap _languageTLH;
 	LanguageThreadLocalHeapStruct* const _tlh; /**< current TLH */
 
-	uint8_t ** const _pointerToHeapAlloc; /**< pointer to Heap Allocation field for this TLH in J9VMThread structure (can be heapAlloc or nonZeroHeapAlloc) */
-	uint8_t ** const _pointerToHeapTop; /**< pointer to Heap Top field for this TLH in J9VMThread structure (can be heapTop or nonZeroHeapTop) */
-	intptr_t * const _pointerToTlhPrefetchFTA; /**< pointer to tlhPrefetchFTA field for this TLH in J9VMThread structure (can be tlhPrefetchFTA or nonZeroTlhPrefetchFTA) */
+	uint8_t ** const _pointerToHeapAlloc; /**< pointer to Heap Allocation field for this TLH in OMR_VMThread structure (can be heapAlloc or nonZeroHeapAlloc) */
+	uint8_t ** const _pointerToHeapTop; /**< pointer to Heap Top field for this TLH in OMR_VMThread structure (can be heapTop or nonZeroHeapTop) */
+	intptr_t * const _pointerToTlhPrefetchFTA; /**< pointer to tlhPrefetchFTA field for this TLH in OMR_VMThread structure (can be tlhPrefetchFTA or nonZeroTlhPrefetchFTA) */
 
 	MM_ObjectAllocationInterface *_objectAllocationInterface; /**< Pointer to TLHAllocationInterface instance */
 

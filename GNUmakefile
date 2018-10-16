@@ -128,6 +128,10 @@ ifeq (1,$(OMR_GC_STACCATO))
 main_targets += \
   gc/staccato
 endif
+ifeq (1,$(OMR_GC_VLHGC))
+main_targets += \
+  gc/vlhgc
+endif
 endif
 
 # Omrsig Targets

@@ -2102,7 +2102,7 @@ MM_ConcurrentGC::concurrentMark(MM_EnvironmentBase *env, MM_MemorySubSpace *subs
 	assume0(allocationSize > 0);
 	/* .. we must not mark anything if WB not yet active */
 #if 0	/* TODO 90354: Find a way to reestablish this assertion */
-	Assert_MM_true((_stats.getExecutionMode() < CONCURRENT_ROOT_TRACING1) || (((J9VMThread *)env->getLanguageVMThread())->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE));
+	Assert_MM_true((_stats.getExecutionMode() < CONCURRENT_ROOT_TRACING1) || (((OMR_VMThread *)env->getLanguageVMThread())->privateFlags & J9_PRIVATE_FLAGS_CONCURRENT_MARK_ACTIVE));
 #endif
 
 	/* Boost priority of thread whilst we are paying our tax; dont want low priority

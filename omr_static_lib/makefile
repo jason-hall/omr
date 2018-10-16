@@ -69,6 +69,9 @@ endif
 ifeq (1,$(OMR_GC_STACCATO))
 OMRLIBS += $(top_srcdir)/gc/staccato
 endif
+ifeq (1,$(OMR_GC_VLHGC))
+OMRLIBS += $(top_srcdir)/gc/vlhgc
+endif
 endif
 
 # Prepend the path to the library for relative paths.

@@ -194,7 +194,7 @@ MM_SweepSchemeSegregated::unmarkRegion(MM_EnvironmentBase *env, MM_HeapRegionDes
 	 * CMVC 149635 : We need to ensure we do not miss to clear any scan bit, which is set for the ref array copy optimization.
 	 * To not miss the scan bit of an object that's in the last cell of a region, we pretend the last object starts
 	 * at 16 bytes past its header, which is where we would set the scan bit on the mark map.
-	 * Note we need to ensure that cell size is at least >16 bytes, otherwise 16 bytes past J9Object* would go off the end of page, hence the if check below.
+	 * Note we need to ensure that cell size is at least >16 bytes, otherwise 16 bytes past fomrobject_t* would go off the end of page, hence the if check below.
 	 * And since there is no scan bit for object that's 16 bytes, this should be safe.
 	 */
 	if (lastCellStart + scanBitOffset >= regionHighAddress) {

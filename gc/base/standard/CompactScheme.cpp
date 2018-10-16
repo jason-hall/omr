@@ -1134,7 +1134,7 @@ MM_CompactScheme::saveForwardingPtr(CompactTableEntry &entry, omrobjectptr_t obj
 	}
 
 	uintptr_t offset = compressedPageOffset(objectPtr);
-	assume0(offset*sizeof(J9Object) <= sizeof_page);
+	assume0(offset*sizeof(fomrobject_t) <= sizeof_page);
 	entry.setBit(offset);
 
 	if (counter >= 1 && counter <= maxHints) {
@@ -1291,7 +1291,7 @@ MM_CompactScheme::getForwardingPtr(omrobjectptr_t objectPtr) const
 	intptr_t offset = compressedPageOffset(objectPtr);
 
 	//OMRTODO: dagar what to replace size with?
-	//Assert_MM_true(offset * sizeof(J9Object) <= sizeof_page);
+	//Assert_MM_true(offset * sizeof(fomrobject_t) <= sizeof_page);
 
 	intptr_t n = _compactTable[index].getObjectOrdinal(offset);
 	if (n == 0) {

@@ -29,9 +29,8 @@
 #define SWEEPVLHGCSTATS_HPP_
 
 #include "omrcfg.h"
-#include "j9.h"
+#include "omr.h"
 #include "omrport.h"
-#include "j9consts.h"
 #include "modronopt.h"
 
 #if defined(OMR_GC_VLHGC)

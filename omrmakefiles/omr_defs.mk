@@ -55,6 +55,10 @@ ifeq (1,$(OMR_GC_STACCATO))
 OMRGC_IPATH += $(top_srcdir)/gc/staccato
 endif
 
+ifeq (1,$(OMR_GC_VLHGC))
+OMRGC_IPATH += $(top_srcdir)/gc/vlhgc
+endif
+
 # Public Core OMR header files
 OMRINCLUDECORE = $(addprefix -I,$(OMR_IPATH))
 
