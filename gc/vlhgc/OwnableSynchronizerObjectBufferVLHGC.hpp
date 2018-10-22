@@ -61,14 +61,15 @@ public:
 	 */
 	MM_OwnableSynchronizerObjectBufferVLHGC(MM_GCExtensionsBase *extensions, UDATA maxObjectCount);
 
+#if defined (OMR_GC_MODRON_COMPACTION)
 	/**
 	 * Add the specified OwnableSynchronizer object to the buffer only when the object in Compacted Regions,
 	 * this method is only called from WriteOnceCompactor
 	 * @param env[in] the current thread
 	 * @param object[in] the object to add
 	 */
-	void addForOnlyCompactedRegion(MM_EnvironmentBase* env, fomrobject_t object);
-
+	void addForOnlyCompactedRegion(MM_EnvironmentBase* env, omrobjectptr_t object);
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 };
 
 #endif /* OWABLESYNCHRONIZEROBJECTBUFFERVLHGC_HPP_ */

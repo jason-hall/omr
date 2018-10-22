@@ -1092,6 +1092,7 @@ public:
 
 	virtual void identityHashDataAddRange(MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, uintptr_t size, void* lowAddress, void* highAddress);
 	virtual void identityHashDataRemoveRange(MM_EnvironmentBase* env, MM_MemorySubSpace* subspace, uintptr_t size, void* lowAddress, void* highAddress);
+	virtual void updateIdentityHashDataForSaltIndex(UDATA index);
 
 #define CONCURRENT_SCAVENGER_PAGE_MINIMUM_SECTION_SIZE (512 * 1024)
 #define CONCURRENT_SCAVENGER_PAGE_SECTIONS 64

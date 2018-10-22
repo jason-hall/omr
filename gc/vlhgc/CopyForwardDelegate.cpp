@@ -38,7 +38,7 @@
 
 MM_CopyForwardDelegate::MM_CopyForwardDelegate(MM_EnvironmentVLHGC *env)
 	: _javaVM((OMR_VM *)env->getLanguageVM())
-	, _extensions(MM_GCExtensionsBase::getExtensions(env))
+	, _extensions(MM_GCExtensionsBase::getExtensions(env->getOmrVM()))
 	, _breadthFirstCopyForwardScheme(NULL)
 {
 	_typeId = __FUNCTION__;
@@ -47,7 +47,7 @@ MM_CopyForwardDelegate::MM_CopyForwardDelegate(MM_EnvironmentVLHGC *env)
 bool
 MM_CopyForwardDelegate::initialize(MM_EnvironmentVLHGC *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	_breadthFirstCopyForwardScheme = MM_CopyForwardScheme::newInstance(env, extensions->heapRegionManager);
 
 	return (NULL != _breadthFirstCopyForwardScheme);
@@ -86,10 +86,10 @@ MM_CopyForwardDelegate::postCopyForwardCleanup(MM_EnvironmentVLHGC *env)
 {
 	/* Restart the allocation caches associated to all threads */
 	{
-		GC_VMThreadListIterator vmThreadListIterator(_javaVM);
+		GC_OMRVMThreadListIterator vmThreadListIterator(_javaVM);
 		OMR_VMThread *walkThread;
-		while((walkThread = vmThreadListIterator.nextVMThread()) != NULL) {
-			MM_EnvironmentBase *walkEnv = MM_EnvironmentBase::getEnvironment(walkThread->omrVMThread);
+		while((walkThread = vmThreadListIterator.nextOMRVMThread()) != NULL) {
+			MM_EnvironmentBase *walkEnv = MM_EnvironmentBase::getEnvironment(walkThread);
 			walkEnv->_objectAllocationInterface->restartCache(env);
 		}
 	}

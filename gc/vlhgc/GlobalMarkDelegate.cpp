@@ -40,8 +40,8 @@
 #include "CycleState.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentVLHGC.hpp"
-#include "FinalizeListManager.hpp"
-#include "FinalizerSupport.hpp"
+// OMRTODO: Needed? From gc_base #include "FinalizeListManager.hpp"
+//#include "FinalizerSupport.hpp"
 #include "GCExtensionsBase.hpp"
 #include "GlobalMarkCardScrubber.hpp"
 #include "GlobalMarkingScheme.hpp"
@@ -55,7 +55,7 @@ bool
 MM_GlobalMarkDelegate::initialize(MM_EnvironmentVLHGC *env)
 {
 	_javaVM = (OMR_VM *)env->getLanguageVM();
-	_extensions = MM_GCExtensionsBase::getExtensions(env);
+	_extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 
 	if(NULL == (_markingScheme = MM_GlobalMarkingScheme::newInstance(env))) {
 		goto error_no_memory;
@@ -223,7 +223,7 @@ MM_GlobalMarkDelegate::performMarkForGlobalGC(MM_EnvironmentVLHGC *env)
 bool 
 MM_GlobalMarkDelegate::performMarkIncremental(MM_EnvironmentVLHGC *env, I_64 markIncrementEndTime)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_GlobalMarkDelegate_performMarkIncremental_Entry(env->getLanguageVMThread(), markIncrementEndTime);
 	MM_CycleState *cycleState = env->_cycleState;
 	bool result = false;
@@ -253,7 +253,7 @@ MM_GlobalMarkDelegate::performMarkIncremental(MM_EnvironmentVLHGC *env, I_64 mar
 			/* initialize all the roots */
 			markRoots(env);
 
-			timeout = j9time_current_time_millis() >= markIncrementEndTime;
+			timeout = omrtime_current_time_millis() >= markIncrementEndTime;
 			if (timeout) {
 				/* Process work packets at the next incremental mark step */
 				cycleState->_markDelegateState = MM_CycleState::state_process_work_packets_after_initial_mark;

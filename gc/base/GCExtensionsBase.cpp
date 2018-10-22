@@ -289,6 +289,12 @@ MM_GCExtensionsBase::identityHashDataRemoveRange(MM_EnvironmentBase* env, MM_Mem
 	/* empty */
 }
 
+void
+MM_GCExtensionsBase::updateIdentityHashDataForSaltIndex(UDATA index)
+{
+	/* empty */
+}
+
 /* Set Xmx (heap default). For most platforms the heap default is a fraction of
  * the usable physical memory - half of usable memory with a min of 16 MiB and a max of 512 MiB.
  */

@@ -44,6 +44,7 @@
 #include "GlobalMarkDelegate.hpp"
 #include "MasterGCThread.hpp"
 #include "ModronTypes.hpp"
+#include "omrmodroncore.h"
 #include "PartialMarkDelegate.hpp"
 #include "ProjectedSurvivalCollectionSetDelegate.hpp"
 #include "ReclaimDelegate.hpp"
@@ -68,7 +69,7 @@ protected:
 	MM_GCExtensionsBase *_extensions;
 
 private:
-	J9PortLibrary *_portLibrary;
+	OMRPortLibrary *_portLibrary;
 	
 	MM_HeapRegionManager *_regionManager;	/**< The manager which will be walked to configure the collection flags on regions in the heap */
 	
@@ -128,7 +129,7 @@ private:
 	 */
 	void postMarkMapCompletion(MM_EnvironmentVLHGC *env);
 
-#if 0 OMRTODO
+#if 0 // OMRTODO
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	/**
 	 * Examine and unload class loaders post mark.

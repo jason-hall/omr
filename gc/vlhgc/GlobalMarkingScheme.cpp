@@ -26,7 +26,7 @@
 #include "omr.h"
 #include "omrcfg.h"
 #include "omrgcconsts.h"
-#include "j2sever.h"
+// OMRTODO ? #include "j2sever.h"
 #include "ModronAssertions.h"
 
 #include <string.h>
@@ -67,7 +67,7 @@
 #include "MarkMapManager.hpp"
 #include "MemorySubSpaceRegionIterator.hpp"
 #include "ModronTypes.hpp"
-#include "ObjectAccessBarrier.hpp"
+// OMRTODO #include "ObjectAccessBarrier.hpp"
 #include "ObjectModel.hpp"
 #include "PacketSlotIterator.hpp"
 #include "ParallelTask.hpp"
@@ -199,7 +199,7 @@ MM_ParallelGlobalMarkTask::shouldYieldFromTask(MM_EnvironmentBase *env)
 {
 	if (!_timeLimitWasHit) {
 		PORT_ACCESS_FROM_ENVIRONMENT(env);
-		I_64 currentTime = j9time_current_time_millis();
+		I_64 currentTime = omrtime_current_time_millis();
 						
 		if (currentTime >= _timeThreshold) {
 			_timeLimitWasHit = true;
@@ -1430,8 +1430,8 @@ MM_GlobalMarkingScheme::markLiveObjectsComplete(MM_EnvironmentVLHGC *env)
 	}
 	
 	MM_GlobalMarkingSchemeRootClearer rootClearer(env, this);
-	rootClearer.setStringTableAsRoot(!isCollectStringConstantsEnabled());
-	rootClearer.scanClearable(env);
+	// OMROTODO rootClearer.setStringTableAsRoot(!isCollectStringConstantsEnabled());
+	// rootClearer.scanClearable(env);
 
 	/* If this weren't a GMP, we'd need to deleteDeadObjectsFromExternalCycle here, but since it is there can't be an external cycle state */
 	Assert_MM_true(NULL == env->_cycleState->_externalCycleState);

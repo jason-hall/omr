@@ -30,7 +30,7 @@
 #include "HeapRegionDataForAllocate.hpp"
 #include "HeapRegionDataForCompactVLHGC.hpp"
 #include "LightweightNonReentrantLock.hpp"
-// OMRTODO ? #include "OwnableSynchronizerObjectList.hpp"
+#include "OwnableSynchronizerObjectList.hpp"
 //#include "ReferenceObjectList.hpp"
 #include "RememberedSetCardList.hpp"
 //#include "UnfinalizedObjectList.hpp"
@@ -70,9 +70,9 @@ public:
 		MM_HeapRegionDescriptorVLHGC *_nextRegion;  /**< Region list link for compact group resource management during a copyforward operation */
 		MM_HeapRegionDescriptorVLHGC *_previousRegion;  /**< Region list link for compact group resource management during a copyforward operation */
 	} _copyForwardData;
-#if defined (J9VM_GC_MODRON_COMPACTION)
+#if defined (OMR_GC_MODRON_COMPACTION)
 	MM_HeapRegionDataForCompactVLHGC _compactData;
-#endif /* defined (J9VM_GC_MODRON_COMPACTION) */
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 	/* this is only of interest for collectors who can move objects so we ifdef it out, in other cases, to prove that no other specs are absorbing the cost of looking up regions and tracking critical counts */
 	UDATA volatile _criticalRegionsInUse;	/**< The number of JNI critical regions which are currently in use within the receiver's address range (typically 0).  This value can be modified concurrently so atomics are required */
 
@@ -99,7 +99,7 @@ private:
 	MM_HeapRegionDescriptorVLHGC *_dynamicSelectionNext;  /**< Linked list pointer used during dynamic set selection (NOTE: Valid only during dynamic set selection) */
 
 	// OMRTODO MM_UnfinalizedObjectList _unfinalizedObjectList; /**< A list of unfinalized objects in this region */
-	//MM_OwnableSynchronizerObjectList _ownableSynchronizerObjectList; /**< A list of ownable synchronizer objects in this region */
+	MM_OwnableSynchronizerObjectList _ownableSynchronizerObjectList; /**< A list of ownable synchronizer objects in this region */
 	//MM_ReferenceObjectList _referenceObjectList; /**< A list of reference objects (i.e. weak/soft/phantom) in this region */
 	
 	/*
@@ -247,7 +247,7 @@ public:
 	 * Fetch the list of ownable synchronizer objects within this region.
 	 * @return the list
 	 */
-	// OMRTODO MM_OwnableSynchronizerObjectList *getOwnableSynchronizerObjectList() { return &_ownableSynchronizerObjectList; }
+	MM_OwnableSynchronizerObjectList *getOwnableSynchronizerObjectList() { return &_ownableSynchronizerObjectList; }
 	
 	/**
 	 * Fetch the list of reference objects within this region.

@@ -344,7 +344,7 @@ MM_ParallelScrubCardTableTask::shouldYieldFromTask(MM_EnvironmentBase *env)
 {
 	if (!_timeLimitWasHit) {
 		PORT_ACCESS_FROM_ENVIRONMENT(env);
-		I_64 currentTime = j9time_current_time_millis();
+		I_64 currentTime = omrtime_current_time_millis();
 						
 		if (currentTime >= _timeThreshold) {
 			_timeLimitWasHit = true;

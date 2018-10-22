@@ -29,7 +29,7 @@
 #include "Base.hpp"
 #include "CollectionStatistics.hpp"
 #include "EnvironmentBase.hpp"
-#include "GCExtensions.hpp"
+#include "GCExtensionsBase.hpp"
 #include "Heap.hpp"
 
 /**

@@ -26,8 +26,8 @@
 #include "ModronAssertions.h"
 
 #include "OwnableSynchronizerObjectBufferVLHGC.hpp"
+#include "Heap.hpp"
 #include "HeapRegionManager.hpp"
-
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "OwnableSynchronizerObjectList.hpp"
 
@@ -41,7 +41,7 @@ MM_OwnableSynchronizerObjectBufferVLHGC *
 MM_OwnableSynchronizerObjectBufferVLHGC::newInstance(MM_EnvironmentBase *env)
 {
 	MM_OwnableSynchronizerObjectBufferVLHGC *ownableObjectBuffer = NULL;
-	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 
 	ownableObjectBuffer = (MM_OwnableSynchronizerObjectBufferVLHGC *)env->getForge()->allocate(sizeof(MM_OwnableSynchronizerObjectBufferVLHGC), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (NULL != ownableObjectBuffer) {
@@ -76,8 +76,9 @@ MM_OwnableSynchronizerObjectBufferVLHGC::flushImpl(MM_EnvironmentBase* env)
 	region->getOwnableSynchronizerObjectList()->incrementObjectCount(_objectCount);
 }
 
+#if defined (OMR_GC_MODRON_COMPACTION)
 void
-MM_OwnableSynchronizerObjectBufferVLHGC::addForOnlyCompactedRegion(MM_EnvironmentBase* env, fomrobject_t object)
+MM_OwnableSynchronizerObjectBufferVLHGC::addForOnlyCompactedRegion(MM_EnvironmentBase* env, omrobjectptr_t object)
 {
 	Assert_MM_true(object != _head);
 	Assert_MM_true(object != _tail);
@@ -87,7 +88,7 @@ MM_OwnableSynchronizerObjectBufferVLHGC::addForOnlyCompactedRegion(MM_Environmen
 		Assert_MM_true(NULL != _head);
 		Assert_MM_true(NULL != _tail);
 
-		_extensions->accessBarrier->setOwnableSynchronizerLink(object, _head);
+		// OMRTODO _extensions->accessBarrier->setOwnableSynchronizerLink(object, _head);
 		_head = object;
 		_objectCount += 1;
 	} else {
@@ -98,7 +99,7 @@ MM_OwnableSynchronizerObjectBufferVLHGC::addForOnlyCompactedRegion(MM_Environmen
 		if (((MM_HeapRegionDescriptorVLHGC *)region)->_compactData._shouldCompact) {
 			/* flush the buffer and start fresh */
 			flush(env);
-			_extensions->accessBarrier->setOwnableSynchronizerLink(object, NULL);
+			// OMRTODO _extensions->accessBarrier->setOwnableSynchronizerLink(object, NULL);
 			_head = object;
 			_tail = object;
 			_objectCount = 1;
@@ -107,3 +108,5 @@ MM_OwnableSynchronizerObjectBufferVLHGC::addForOnlyCompactedRegion(MM_Environmen
 		}
 	}
 }
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
+

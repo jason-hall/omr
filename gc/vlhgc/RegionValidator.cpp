@@ -31,6 +31,7 @@
 #include "CycleState.hpp"
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
+#include "Heap.hpp"
 #include "HeapMapWordIterator.hpp"
 #include "HeapRegionManager.hpp"
 #include "MarkMap.hpp"
@@ -45,28 +46,28 @@ MM_RegionValidator::threadCrash(MM_EnvironmentBase* env)
 void
 MM_RegionValidator::reportRegion(MM_EnvironmentBase* env, const char* message)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_RegionValidator_reportRegion_Entry(env->getLanguageVMThread(), _region);
 
 	MM_HeapRegionDescriptor::RegionType regionType = _region->getRegionType();
 	if (_region->isArrayletLeaf()) {
-		j9tty_printf(PORTLIB, "ERROR: %s in region %p; type=%zu; range=%p-%p; spine=%p\n", message, _region, (UDATA)regionType, _region->getLowAddress(), _region->getHighAddress(), _region->_allocateData.getSpine());
-		Trc_MM_RegionValidator_leafRegion(env->getLanguageVMThread(), message, _region, regionType, _region->getLowAddress(), _region->getHighAddress(), _region->_allocateData.getSpine());
+		// OMRTODO getSpine()? omrtty_printf("ERROR: %s in region %p; type=%zu; range=%p-%p; spine=%p\n", message, _region, (UDATA)regionType, _region->getLowAddress(), _region->getHighAddress(), _region->_allocateData.getSpine());
+		//Trc_MM_RegionValidator_leafRegion(env->getLanguageVMThread(), message, _region, regionType, _region->getLowAddress(), _region->getHighAddress(), _region->_allocateData.getSpine());
 	} else {
-		j9tty_printf(PORTLIB, "ERROR: %s in region %p; type=%zu; range=%p-%p\n", message, _region, (UDATA)regionType, _region->getLowAddress(), _region->getHighAddress());
+		omrtty_printf("ERROR: %s in region %p; type=%zu; range=%p-%p\n", message, _region, (UDATA)regionType, _region->getLowAddress(), _region->getHighAddress());
 		Trc_MM_RegionValidator_objectRegion(env->getLanguageVMThread(), message, _region, regionType, _region->getLowAddress(), _region->getHighAddress());
 	}
 	
-	MM_HeapRegionManager* regionManager = MM_GCExtensionsBase::getExtensions(env)->getHeap()->getHeapRegionManager();
+	MM_HeapRegionManager* regionManager = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->getHeap()->getHeapRegionManager();
 	UDATA thisIndex = regionManager->mapDescriptorToRegionTableIndex(_region);
 	if (thisIndex > 0) {
 		MM_HeapRegionDescriptorVLHGC *previousRegion = (MM_HeapRegionDescriptorVLHGC*)regionManager->tableDescriptorForIndex(thisIndex - 1);
 		MM_HeapRegionDescriptor::RegionType previousRegionType = previousRegion->getRegionType();
 		if (previousRegion->isArrayletLeaf()) {
-			j9tty_printf(PORTLIB, "ERROR: (Previous region %p; type=%zu; range=%p-%p; spine=%p)\n", previousRegion, (UDATA)previousRegionType, previousRegion->getLowAddress(), previousRegion->getHighAddress(), previousRegion->_allocateData.getSpine());
-			Trc_MM_RegionValidator_previousLeafRegion(env->getLanguageVMThread(), previousRegion, previousRegionType, previousRegion->getLowAddress(), previousRegion->getHighAddress(), previousRegion->_allocateData.getSpine());
+			// OMRTODO omrtty_printf("ERROR: (Previous region %p; type=%zu; range=%p-%p; spine=%p)\n", previousRegion, (UDATA)previousRegionType, previousRegion->getLowAddress(), previousRegion->getHighAddress(), previousRegion->_allocateData.getSpine());
+			//Trc_MM_RegionValidator_previousLeafRegion(env->getLanguageVMThread(), previousRegion, previousRegionType, previousRegion->getLowAddress(), previousRegion->getHighAddress(), previousRegion->_allocateData.getSpine());
 		} else {
-			j9tty_printf(PORTLIB, "ERROR: (Previous region %p; type=%zu; range=%p-%p)\n", previousRegion, (UDATA)previousRegionType, previousRegion->getLowAddress(), previousRegion->getHighAddress());
+			omrtty_printf("ERROR: (Previous region %p; type=%zu; range=%p-%p)\n", previousRegion, (UDATA)previousRegionType, previousRegion->getLowAddress(), previousRegion->getHighAddress());
 			Trc_MM_RegionValidator_previousObjectRegion(env->getLanguageVMThread(), previousRegion, previousRegionType, previousRegion->getLowAddress(), previousRegion->getHighAddress());
 		}
 	}
@@ -76,7 +77,8 @@ MM_RegionValidator::reportRegion(MM_EnvironmentBase* env, const char* message)
 
 bool 
 MM_RegionValidator::validate(MM_EnvironmentBase *env) 
-{ 
+{
+#if 0 //OMRTODO
 	const UDATA EYECATCHER = (UDATA)0x99669966;
 	bool result = true;
 	env->_activeValidator = this;
@@ -89,7 +91,7 @@ MM_RegionValidator::validate(MM_EnvironmentBase *env)
 		if (pool->getAllocationPointer() > lowAddress) {
 			/* something is here */
 			fomrobject_t *firstObject = (fomrobject_t *)lowAddress;
-			if (!MM_GCExtensionsBase::getExtensions(env)->objectModel.isDeadObject(firstObject)) {
+			if (!MM_GCExtensionsBase::getExtensions(env->getOmrVM())->objectModel.isDeadObject(firstObject)) {
 				J9Class *clazz = J9GC_J9OBJECT_CLAZZ(firstObject);
 				if (NULL == clazz) {
 					reportRegion(env, "NULL class in first object");
@@ -127,5 +129,8 @@ MM_RegionValidator::validate(MM_EnvironmentBase *env)
 	
 	env->_activeValidator = NULL;
 	return result;
+#else
+	return true;
+#endif
 }
 

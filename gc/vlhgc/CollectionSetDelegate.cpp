@@ -50,7 +50,7 @@
 
 MM_CollectionSetDelegate::MM_CollectionSetDelegate(MM_EnvironmentBase *env, MM_HeapRegionManager *manager)
 	: MM_BaseNonVirtual()
-	, _extensions(MM_GCExtensionsBase::getExtensions(env))
+	, _extensions(MM_GCExtensionsBase::getExtensions(env->getOmrVM()))
 	, _regionManager(manager)
 	, _setSelectionDataTable(NULL)
 	, _dynamicSelectionList(NULL)
@@ -170,7 +170,9 @@ MM_CollectionSetDelegate::createNurseryCollectionSet(MM_EnvironmentVLHGC *env)
 					/* sweep/compact flags are set in ReclaimDelegate */
 					region->_markData._shouldMark = true;
 					region->_reclaimData._shouldReclaim = true;
+#if defined (OMR_GC_MODRON_COMPACTION)
 					region->_compactData._shouldCompact = false;
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 					/* Collected regions are no longer target for defragmentation until next GMP */
 					region->_defragmentationTarget = false;
 					_extensions->compactGroupPersistentStats[compactGroup]._regionsInRegionCollectionSetForPGC += 1;
@@ -212,7 +214,9 @@ MM_CollectionSetDelegate::selectRegionsForBudget(MM_EnvironmentVLHGC *env, UDATA
 			/* The region is to be selected as part of the dynamic set */
 			regionSelectionPtr->_markData._shouldMark = true;
 			regionSelectionPtr->_reclaimData._shouldReclaim = true;
+#if defined (OMR_GC_MODRON_COMPACTION)
 			regionSelectionPtr->_compactData._shouldCompact = false;
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 			/* Collected regions are no longer target for defragmentation until the next GMP */
 			regionSelectionPtr->_defragmentationTarget = false;
 			ageGroupBudgetRemaining -= 1;
@@ -473,7 +477,9 @@ MM_CollectionSetDelegate::createRegionCollectionSetForGlobalGC(MM_EnvironmentVLH
 		Assert_MM_false(region->_reclaimData._shouldReclaim);
 		if (region->containsObjects()) {
 			region->_reclaimData._shouldReclaim = true;
+#if defined (OMR_GC_MODRON_COMPACTION)
 			region->_compactData._shouldCompact = false;
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 		}
 	}
 }
@@ -537,8 +543,8 @@ MM_CollectionSetDelegate::rateOfReturnCalculationBeforeSweep(MM_EnvironmentVLHGC
 					stats->_reclaimStats._regionCountOverflow += 1;
 				}
 			} else if(region->isArrayletLeaf()) {
-				MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)region->_allocateData.getSpine());
-				Assert_MM_true(parentRegion->containsObjects());
+				/* OMRTODO getSpine? MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)region->_allocateData.getSpine());
+				//Assert_MM_true(parentRegion->containsObjects());
 				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, parentRegion)];
 
 				stats->_reclaimStats._regionCountBefore += 1;
@@ -550,7 +556,7 @@ MM_CollectionSetDelegate::rateOfReturnCalculationBeforeSweep(MM_EnvironmentVLHGC
 				}
 				if(!parentRegion->getRememberedSetCardList()->isAccurate()) {
 					stats->_reclaimStats._regionCountArrayletLeafOverflow += 1;
-				}
+				}*/
 			}
 		}
 	}
@@ -578,7 +584,7 @@ MM_CollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_EnvironmentVLHGC 
 					stats->_reclaimStats._regionDarkMatterAfter +=  memoryPool->getDarkMatterBytes();
 				}
 			} else if(region->isArrayletLeaf()) {
-				MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)region->_allocateData.getSpine());
+				/* OMRTODO getSpine? MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)region->_allocateData.getSpine());
 				Assert_MM_true(parentRegion->containsObjects());
 				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, parentRegion)];
 
@@ -588,7 +594,7 @@ MM_CollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_EnvironmentVLHGC 
 				if(!parentRegion->_sweepData._alreadySwept) {
 					stats->_reclaimStats._reclaimableRegionCountAfter += 1;
 					stats->_reclaimStats._reclaimableRegionCountArrayletLeafAfter += 1;
-				}
+				}*/
 			}
 		}
 

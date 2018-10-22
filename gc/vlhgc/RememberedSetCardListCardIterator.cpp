@@ -86,7 +86,7 @@ GC_RememberedSetCardListCardIterator::nextReferencingCard(MM_EnvironmentBase* en
 void *
 GC_RememberedSetCardListCardIterator::nextReferencingCardHeapAddress(MM_EnvironmentBase* env)
 {
-	MM_InterRegionRememberedSet *interRegionRememberedSet = MM_GCExtensionsBase::getExtensions(env)->interRegionRememberedSet;
+	MM_InterRegionRememberedSet *interRegionRememberedSet = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->interRegionRememberedSet;
 	MM_RememberedSetCard card = nextReferencingCard(env);
 	return interRegionRememberedSet->convertHeapAddressFromRememberedSetCard(card);
 }

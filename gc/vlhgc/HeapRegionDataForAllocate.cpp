@@ -74,12 +74,12 @@ MM_HeapRegionDataForAllocate::tearDown(MM_EnvironmentVLHGC *env)
 bool
 MM_HeapRegionDataForAllocate::taskAsMemoryPoolBumpPointer(MM_EnvironmentBase *env, MM_AllocationContextTarok *context)
 {
-	MM_IncrementalGenerationalGC *globalCollector = ((MM_IncrementalGenerationalGC *)MM_GCExtensionsBase::getExtensions(env)->getGlobalCollector());
+	MM_IncrementalGenerationalGC *globalCollector = ((MM_IncrementalGenerationalGC *)MM_GCExtensionsBase::getExtensions(env->getOmrVM())->getGlobalCollector());
 	if (globalCollector->isGlobalMarkPhaseRunning()) {
 		MM_MarkMap *nextMarkMap = globalCollector->getMarkMapManager()->getGlobalMarkPhaseMap();
 		if (_region->_nextMarkMapCleared) {
 			_region->_nextMarkMapCleared = false;
-			if (MM_GCExtensionsBase::getExtensions(env)->tarokEnableExpensiveAssertions) {
+			if (MM_GCExtensionsBase::getExtensions(env->getOmrVM())->tarokEnableExpensiveAssertions) {
 				Assert_MM_true(nextMarkMap->checkBitsForRegion(env, _region));
 			}
 		} else {
@@ -90,7 +90,7 @@ MM_HeapRegionDataForAllocate::taskAsMemoryPoolBumpPointer(MM_EnvironmentBase *en
 	if (MM_HeapRegionDescriptor::FREE == _region->getRegionType()) {
 		Assert_MM_true(NULL == _region->getMemoryPool());
 		MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer*)_backingStore;
-		UDATA minimumFreeEntrySize = MM_GCExtensionsBase::getExtensions(env)->getMinimumFreeEntrySize();
+		UDATA minimumFreeEntrySize = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->getMinimumFreeEntrySize();
 		new (memoryPool) MM_MemoryPoolBumpPointer(env, minimumFreeEntrySize);
 		if (memoryPool->initialize(env)) {
 			_region->setMemoryPool(memoryPool);
@@ -146,7 +146,7 @@ MM_HeapRegionDataForAllocate::taskAsIdlePool(MM_EnvironmentVLHGC *env)
 	/* This could be a first PGC after a GMP (that did not build RS list for this region).
 	 * PGC swept this region (it's empty), but RS list is stale - we should clear it
 	 */
-	MM_GCExtensionsBase::getExtensions(env)->interRegionRememberedSet->clearReferencesToRegion(env, _region);
+	MM_GCExtensionsBase::getExtensions(env->getOmrVM())->interRegionRememberedSet->clearReferencesToRegion(env, _region);
 	_region->setRegionType(MM_HeapRegionDescriptor::BUMP_ALLOCATED_IDLE);
 	/* set _projectedLiveBytes to 'uninitialized' value. it will be initalized at the beginning of the first PGC */
 	_region->_projectedLiveBytes = UDATA_MAX;
@@ -156,12 +156,12 @@ MM_HeapRegionDataForAllocate::taskAsIdlePool(MM_EnvironmentVLHGC *env)
 	_region->_defragmentationTarget = false;
 
 	/* When a region becomes idle ensure that identity hash salt for this region gets updated */
-	J9IdentityHashData *salts = ((OMR_VM *)env->getLanguageVM())->identityHashData;
+	OMR_IdentityHashData *salts = ((OMR_VM *)env->getLanguageVM())->_identityHashData;
 	UDATA heapDelta = (UDATA)_region->getLowAddress() - salts->hashData1;
 	UDATA index = heapDelta >> salts->hashData3;
 	Assert_MM_true(index >= 0);
 	Assert_MM_true(index < salts->hashData4);
-	MM_GCExtensionsBase::getExtensions(env)->updateIdentityHashDataForSaltIndex(index);
+	MM_GCExtensionsBase::getExtensions(env->getOmrVM())->updateIdentityHashDataForSaltIndex(index);
 }
 
 #if defined(J9VM_GC_ARRAYLETS)

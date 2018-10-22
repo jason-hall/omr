@@ -699,7 +699,7 @@ private:
 	 * @see MM_CopyForwardScheme:incrementalScanMixedObjectSlots
 	 */
 	// OMRTODO MMINLINE bool incrementalScanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_CopyScanCacheVLHGC* scanCache, fomrobject_t *objectPtr,
-			bool hasPartiallyScannedObject, MM_CopyScanCacheVLHGC** nextScanCache);
+			//bool hasPartiallyScannedObject, MM_CopyScanCacheVLHGC** nextScanCache);
 	/**
 	 * Scans the slots of a PointerArrayObject, remembering objects as required. Scanning is interrupted
 	 * as soon as there is a copy cache that is preferred to the current scan cache. This is returned

@@ -38,6 +38,7 @@
 #include "GCExtensionsBase.hpp"
 #include "ModronTypes.hpp"
 #include "WorkStack.hpp"
+#include "Heap.hpp"
 #include "HeapRegionManager.hpp"
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "ParallelTask.hpp"
@@ -201,7 +202,7 @@ private:
 	bool _dynamicClassUnloadingEnabled;  /**< Local cached value from cycle state for performance reasons (TODO: Reevaluate) */
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 	MM_InterRegionRememberedSet *_interRegionRememberedSet;	/**< A cached pointer to the  inter-region reference tracking  */
-	const bool _collectStringConstantsEnabled;
+	// OMRTODO const bool _collectStringConstantsEnabled;
 	const UDATA _regionSize;	/**< Cached copy of the region size used for short-circuiting region matching checks with the XOR-and-compare */
 
 	/**
@@ -387,7 +388,7 @@ private:
 	 */
 	void scanPointerArrayObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, ScanReason reason);
 
-	MMINLINE bool isCollectStringConstantsEnabled() { return _collectStringConstantsEnabled; };
+	// OMRTODO MMINLINE bool isCollectStringConstantsEnabled() { return _collectStringConstantsEnabled; };
 
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	MMINLINE bool isDynamicClassUnloadingEnabled() { return _dynamicClassUnloadingEnabled; };
@@ -510,7 +511,7 @@ public:
 	 */
 	MM_GlobalMarkingScheme(MM_EnvironmentVLHGC *env)
 		: _javaVM((OMR_VM *)env->getLanguageVM())
-		, _extensions(MM_GCExtensionsBase::getExtensions(env))
+		, _extensions(MM_GCExtensionsBase::getExtensions(env->getOmrVM()))
 		, _heapBase(NULL)
 		, _heapTop(NULL)
 		, _markMap(NULL)
@@ -519,7 +520,7 @@ public:
 		, _dynamicClassUnloadingEnabled(false)
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 		, _interRegionRememberedSet(NULL)
-		, _collectStringConstantsEnabled(_extensions->collectStringConstants)
+		// OMRTODO, _collectStringConstantsEnabled(_extensions->collectStringConstants)
 		, _regionSize(_extensions->regionSize)
 	{
 		_typeId = __FUNCTION__;

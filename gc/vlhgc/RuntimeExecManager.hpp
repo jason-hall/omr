@@ -84,18 +84,18 @@ private:
 	/**
 	 * Java 6 wrapper for forkAndExec native function
 	 */
-	static jint JNICALL forkAndExecNativeV6(JNIEnv* env, jobject receiver, jobject arg1, jobject arg2, jint arg3, jobject arg4, jint arg5, jobject arg6, jboolean arg7, jobject arg8, jobject arg9, jobject arg10);
+	//OMRTODO static jint JNICALL forkAndExecNativeV6(JNIEnv* env, jobject receiver, jobject arg1, jobject arg2, jint arg3, jobject arg4, jint arg5, jobject arg6, jboolean arg7, jobject arg8, jobject arg9, jobject arg10);
 
 	/**
 	 * Java 7 wrapper for forkAndExec native function
 	 */
-	static jint JNICALL forkAndExecNativeV7(JNIEnv* env, jobject receiver, jobject arg1, jobject arg2, jint arg3, jobject arg4, jint arg5, jobject arg6, jobject arg7, jboolean arg8);
+	//OMRTODO static jint JNICALL forkAndExecNativeV7(JNIEnv* env, jobject receiver, jobject arg1, jobject arg2, jint arg3, jobject arg4, jint arg5, jobject arg6, jobject arg7, jboolean arg8);
 
 	/**
 	 * Java 8 wrapper for forkAndExec native function.
 	 * Also used by Oracle 7u55-b08 and newer
 	 */
-	static jint JNICALL forkAndExecNativeV8(JNIEnv* jniEnv, jobject receiver, jint arg1, jobject arg2, jobject arg3, jobject arg4, jint arg5, jobject arg6, jint arg7, jobject arg8, jobject arg9, jboolean arg10);
+	// OMRTODO static jint JNICALL forkAndExecNativeV8(JNIEnv* jniEnv, jobject receiver, jint arg1, jobject arg2, jobject arg3, jobject arg4, jint arg5, jobject arg6, jint arg7, jobject arg8, jobject arg9, jboolean arg10);
 #endif /* defined (LINUX) && !defined (J9ZTPF) */
 };
 

@@ -428,7 +428,7 @@ MM_IncrementalGenerationalGC::globalMarkPhase(MM_EnvironmentVLHGC *env, bool inc
 
 	if (incrementalMark) {
 		reportGMPMarkStart(env);
-		I_64 endTime = j9time_current_time_millis() + _schedulingDelegate.currentGlobalMarkIncrementTimeMillis(env);
+		I_64 endTime = omrtime_current_time_millis() + _schedulingDelegate.currentGlobalMarkIncrementTimeMillis(env);
 		if (env->_cycleState->_markDelegateState == MM_CycleState::state_mark_idle) {
 			_globalMarkDelegate.performMarkSetInitialState(env);
 		}
@@ -1748,7 +1748,7 @@ MM_IncrementalGenerationalGC::verifyMarkMapClosure(MM_EnvironmentVLHGC *env, MM_
 			MM_HeapMapIterator iterator = MM_HeapMapIterator(_extensions, markMap, regionBase, regionTop, false);
 			fomrobject_t *object = NULL;
 			while (NULL != (object = iterator.nextObject())) {
-#if 0 OMRTODO
+#if 0 //OMRTODO
 				/* first, check the validity of the object's class */
 				J9Class *clazz = J9GC_J9OBJECT_CLAZZ(object);
 				Assert_MM_true((UDATA)0x99669966 == clazz->eyecatcher);
@@ -2456,7 +2456,7 @@ MM_IncrementalGenerationalGC::collectorExpanded(MM_EnvironmentBase *envBase, MM_
 void
 MM_IncrementalGenerationalGC::postMarkMapCompletion(MM_EnvironmentVLHGC *env)
 {
-#if 0 OMRTODO
+#if 0 // OMRTODO
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	/* Unload classloaders which weren't reached by the end of mark */
 	if (env->_cycleState->_dynamicClassUnloadingEnabled) {
@@ -2476,7 +2476,7 @@ MM_IncrementalGenerationalGC::postMarkMapCompletion(MM_EnvironmentVLHGC *env)
 #endif /* J9VM_GC_FINALIZATION */
 }
 
-#if 0 OMRTODO
+#if 0 // OMRTODO
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 void
 MM_IncrementalGenerationalGC::unloadDeadClassLoaders(MM_EnvironmentVLHGC *env)

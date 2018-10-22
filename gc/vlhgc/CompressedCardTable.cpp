@@ -165,7 +165,7 @@ MM_CompressedCardTable::setCompressedCardsDirtyForPartialCollect(void *startHeap
 void
 MM_CompressedCardTable::rebuildCompressedCardTableForPartialCollect(MM_EnvironmentBase *env, void *startHeapAddress, void *endHeapAddress)
 {
-	MM_CardTable *cardTable = MM_GCExtensionsBase::getExtensions(env)->cardTable;
+	MM_CardTable *cardTable = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->cardTable;
 	Card *card = cardTable->heapAddrToCardAddr(env, startHeapAddress);
 	Card *cardLast = cardTable->heapAddrToCardAddr(env, endHeapAddress);
 	UDATA compressedCardStartOffset = ((UDATA)startHeapAddress - _heapBase) / (CARD_SIZE * COMPRESSED_CARD_TABLE_DIV);
@@ -244,7 +244,7 @@ MM_CompressedCardTable::isCompressedCardDirtyForPartialCollect(MM_EnvironmentBas
 		 * so if fast check return true we should look at card itself
 		 */
 		if (cardDirty) {
-			MM_CardTable *cardTable = MM_GCExtensionsBase::getExtensions(env)->cardTable;
+			MM_CardTable *cardTable = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->cardTable;
 			Card *cardAddr = cardTable->heapAddrToCardAddr(env, heapAddr);
 			cardDirty = isDirtyCardForPartialCollect(*cardAddr);
 		}
@@ -276,7 +276,7 @@ MM_CompressedCardTable::cleanCardsInRange(MM_EnvironmentBase *env, MM_CardCleane
 	Assert_MM_true(0 == (compressedCardStartOffset % COMPRESSED_CARDS_PER_WORD));
 	Assert_MM_true(0 == (compressedCardEndOffset % COMPRESSED_CARDS_PER_WORD));
 
-	MM_CardTable *cardTable = MM_GCExtensionsBase::getExtensions(env)->cardTable;
+	MM_CardTable *cardTable = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->cardTable;
 	Card *card = cardTable->heapAddrToCardAddr(env, startHeapAddress);
 	U_8 *address = (U_8 *)startHeapAddress;
 	UDATA cardsCleaned = 0;

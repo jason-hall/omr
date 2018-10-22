@@ -38,9 +38,10 @@
 #define METHOD_SIGNATURE_V8 "(I[B[B[BI[BI[B[IZ)I"
 
 
-typedef jint (JNICALL *forkAndExecNativeFunctionV6)(JNIEnv* env, jobject receiver, jobject arg1, jobject arg2, jint arg3, jobject arg4, jint arg5, jobject arg6, jboolean arg7, jobject arg8, jobject arg9, jobject arg10);
+/* OMRTODO typedef jint (JNICALL *forkAndExecNativeFunctionV6)(JNIEnv* env, jobject receiver, jobject arg1, jobject arg2, jint arg3, jobject arg4, jint arg5, jobject arg6, jboolean arg7, jobject arg8, jobject arg9, jobject arg10);
 typedef jint (JNICALL *forkAndExecNativeFunctionV7)(JNIEnv* env, jobject receiver, jobject arg1, jobject arg2, jint arg3, jobject arg4, jint arg5, jobject arg6, jobject arg7, jboolean arg8);
 typedef jint (JNICALL *forkAndExecNativeFunctionV8)(JNIEnv* env, jobject receiver, jint arg1, jobject arg2, jobject arg3, jobject arg4, jint arg5, jobject arg6, jint arg7, jobject arg8, jobject arg9, jboolean arg10);
+*/
 
 MM_RuntimeExecManager::MM_RuntimeExecManager(MM_EnvironmentBase *env)
 	: MM_BaseNonVirtual()
@@ -133,6 +134,7 @@ MM_RuntimeExecManager::jniNativeBindHook(J9HookInterface** hook, UDATA eventNum,
 	}
 }
 
+#if 0 OMRTODO
 jint
 MM_RuntimeExecManager::forkAndExecNativeV6(JNIEnv* jniEnv, jobject receiver, jobject arg1, jobject arg2, jint arg3, jobject arg4, jint arg5, jobject arg6, jboolean arg7, jobject arg8, jobject arg9, jobject arg10)
 {
@@ -219,4 +221,5 @@ MM_RuntimeExecManager::forkAndExecNativeV8(JNIEnv* jniEnv, jobject receiver, jin
 
 	return result;
 }
+#endif
 #endif /* defined (LINUX) && !defined(J9ZTPF) */

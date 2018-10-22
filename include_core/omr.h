@@ -110,6 +110,18 @@ typedef struct OMR_ExclusiveVMAccessStats {
 	UDATA haltedThreads;
 } OMR_ExclusiveVMAccessStats;
 
+
+/* @ddr_namespace: map_to_type=J9IdentityHashData */
+
+typedef struct OMR_IdentityHashData {
+	UDATA hashData1;
+	UDATA hashData2;
+	UDATA hashData3;
+	UDATA hashData4;
+	UDATA hashSaltPolicy;
+	U_32 hashSaltTable[1];
+} OMR_IdentityHashData;
+
 typedef struct OMR_VM {
 	struct OMR_Runtime *_runtime;
 	void *_language_vm;
@@ -145,6 +157,7 @@ typedef struct OMR_VM {
 #endif /* OMR_RAS_TDF_TRACE */
 	omrthread_monitor_t _gcCycleOnMonitor;
 	UDATA _gcCycleOn;
+	struct OMR_IdentityHashData *_identityHashData;
 } OMR_VM;
 
 typedef struct OMR_VMThread {
