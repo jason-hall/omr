@@ -190,7 +190,7 @@ class MM_GlobalMarkingScheme : public MM_BaseVirtual
 	 * Data members
 	 */
 private:
-	OMR_VM *const _javaVM;
+	OMR_VM *const _omrVM;
 	MM_GCExtensionsBase *const _extensions;
 	void *_heapBase;
 	void *_heapTop;
@@ -226,30 +226,30 @@ private:
 	 * @param from[in] The object this reference points from (not NULL)
 	 * @param to[in] The object this reference points to (could be NULL)
 	 */
-	void rememberReferenceIfRequired(MM_EnvironmentVLHGC *env, fomrobject_t *from, fomrobject_t *to);
+	void rememberReferenceIfRequired(MM_EnvironmentVLHGC *env, omrobjectptr_t from, omrobjectptr_t to);
 
-	bool markObjectNoCheck(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, bool leafType = false);
+	bool markObjectNoCheck(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, bool leafType = false);
 
 	/**
 	 * Called by the root scanner to scan all WeakReference objects discovered by the mark phase,
 	 * clearing and enqueuing them if necessary.
 	 * @param env[in] the current thread
 	 */
-	void scanWeakReferenceObjects(MM_EnvironmentVLHGC *env);
+	// OMRTODO void scanWeakReferenceObjects(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Called by the root scanner to scan all SoftReference objects discovered by the mark phase,
 	 * clearing and enqueuing them if necessary.
 	 * @param env[in] the current thread
 	 */
-	void scanSoftReferenceObjects(MM_EnvironmentVLHGC *env);
+	// OMRTODO void scanSoftReferenceObjects(MM_EnvironmentVLHGC *env);
 
 	/**
 	 * Called by the root scanner to scan all PhantomReference objects discovered by the mark phase,
 	 * clearing and enqueuing them if necessary.
 	 * @param env[in] the current thread
 	 */
-	void scanPhantomReferenceObjects(MM_EnvironmentVLHGC *env);
+	// OMRTODO void scanPhantomReferenceObjects(MM_EnvironmentVLHGC *env);
 	
 	/**
 	 * Process the list of reference objects recorded in the specified list.
@@ -259,7 +259,7 @@ private:
 	 * @param headOfList[in] the first object in the linked list 
 	 * @param referenceStats copy forward stats substructure to be updated
 	 */
-	void processReferenceList(MM_EnvironmentVLHGC *env, fomrobject_t* headOfList, MM_ReferenceStats *referenceStats);
+	// OMRTODO void processReferenceList(MM_EnvironmentVLHGC *env, fomrobject_t* headOfList, MM_ReferenceStats *referenceStats);
 
 #if defined(J9VM_GC_FINALIZATION)
 	/**
@@ -275,7 +275,7 @@ private:
 	 */
 	void scanOwnableSynchronizerObjects(MM_EnvironmentVLHGC *env);
 
-	bool isMarked(fomrobject_t *objectPtr);
+	bool isMarked(omrobjectptr_t objectPtr);
 
 	/**
 	 * Handling of Work Packets overflow case
@@ -301,7 +301,7 @@ private:
 	 * @param objectPtr[in] the object to scan. Must be a non-NULL object on the heap.
 	 * @param reason a code indicating why the object is being scanned
 	 */
-	void scanObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, ScanReason reason);
+	void scanObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, ScanReason reason);
 
 	/**
 	 * Scan the specified object which has already been marked.
@@ -313,7 +313,7 @@ private:
 	 * @param objectPtr[in] the mixed object to scan
  	 * @param reason a code indicating why the object is being scanned
 	 */
-	void scanMixedObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, ScanReason reason);
+	void scanMixedObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, ScanReason reason);
 	
 	/**
 	 * Scan the specified instance of java.lang.Class.
@@ -375,7 +375,7 @@ private:
 	 * @param indexArg the index to start scanning from
 	 * @param reason a code indicating why the object is being scanned
 	 */
-	UDATA scanPointerArrayObjectSplit(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, UDATA indexArg, ScanReason reason);
+	UDATA scanPointerArrayObjectSplit(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, UDATA indexArg, ScanReason reason);
 
 	/**
 	 * Scan the specified object array.
@@ -386,7 +386,7 @@ private:
 	 * @param objectPtr[in] an object array
 	 * @param reason a code indicating why the object is being scanned
 	 */
-	void scanPointerArrayObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, ScanReason reason);
+	void scanPointerArrayObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, ScanReason reason);
 
 	// OMRTODO MMINLINE bool isCollectStringConstantsEnabled() { return _collectStringConstantsEnabled; };
 
@@ -417,12 +417,12 @@ private:
 	 * @param env[in] the current thread
 	 * @param objectPtr[in] the object whose class should be marked
 	 */
-	MMINLINE void markObjectClass(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr);
+	// OMROTODO MMINLINE void markObjectClass(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr);
 
 protected:
 	virtual bool initialize(MM_EnvironmentVLHGC *env);
 	virtual void tearDown(MM_EnvironmentVLHGC *env);
-	MMINLINE bool isHeapObject(fomrobject_t* objectPtr)
+	MMINLINE bool isHeapObject(omrobjectptr_t objectPtr)
 	{
 		return ((_heapBase <= (U_8 *)objectPtr) && (_heapTop > (U_8 *)objectPtr));
 	}
@@ -482,7 +482,7 @@ public:
 	 */
 	void resolveOverflow(MM_EnvironmentVLHGC *env);
 
-	bool markObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, bool leafType = false);
+	bool markObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, bool leafType = false);
 
 	void completeScan(MM_EnvironmentVLHGC *env);
 	
@@ -510,7 +510,7 @@ public:
 	 * Create a GlobalMarkingScheme object.
 	 */
 	MM_GlobalMarkingScheme(MM_EnvironmentVLHGC *env)
-		: _javaVM((OMR_VM *)env->getLanguageVM())
+		: _omrVM(env->getOmrVM())
 		, _extensions(MM_GCExtensionsBase::getExtensions(env->getOmrVM()))
 		, _heapBase(NULL)
 		, _heapTop(NULL)

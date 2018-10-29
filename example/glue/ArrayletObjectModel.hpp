@@ -120,6 +120,18 @@ public:
 		Assert_MM_unimplemented();
 		return 0;
 	}
+
+	/**
+	 * Returns the size of an object header, in bytes.
+	 * @param objectPtr Pointer to an object
+	 * @return The size of an object header, in bytes.
+	 */
+	MMINLINE UDATA
+	getHeaderSize(omrobjectptr_t objectPtr)
+	{
+		Assert_MM_unimplemented();
+		return 0;
+	}
 };
 
 #endif /*OMR_GC_ARRAYLETS */

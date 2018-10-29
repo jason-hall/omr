@@ -119,21 +119,21 @@ private:
 	 * @param fromObject object (its slot) pointing from (must not be NULL)
 	 * @param toObject object being pointed (must not be NULL and must be in a different region than fromObject)
 	 */
-	void rememberReferenceForMarkInternal(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, fomrobject_t* toObject);
+	void rememberReferenceForMarkInternal(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, omrobjectptr_t toObject);
 
 	/**
 	 * Out-of-line implementation of rememberReferenceForCompact()
 	 * @param fromObject object (its slot) pointing from (must not be NULL)
 	 * @param toObject object being pointed (must not be NULL and must be in a different region than fromObject)
 	 */
-	void rememberReferenceForCompactInternal(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, fomrobject_t* toObject);
+	void rememberReferenceForCompactInternal(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, omrobjectptr_t toObject);
 
 	/**
 	 * Out-of-line implementation of rememberReferenceForCopyForward()
 	 * @param fromObject object (its slot) pointing from (must not be NULL)
 	 * @param toObject object being pointed (must not be NULL and must be in a different region than fromObject)
 	 */
-	void rememberReferenceForCopyForwardInternal(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, fomrobject_t* toObject);
+	void rememberReferenceForCopyForwardInternal(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, omrobjectptr_t toObject);
 
 	/**
 	 * Check should card be treated as dirty
@@ -284,7 +284,7 @@ public:
 	 * @param toObject object being pointed
 	 */
 	MMINLINE void
-	rememberReferenceForMark(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, fomrobject_t* toObject)
+	rememberReferenceForMark(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, omrobjectptr_t toObject)
 	{
 		if (NULL != toObject) {
 			/* We use the XOR and region mask of object pointers to determine if the objects share the same region.
@@ -325,7 +325,7 @@ public:
 	 * @param toObject object being pointed
 	 */
 	MMINLINE void 
-	rememberReferenceForCompact(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, fomrobject_t* toObject)
+	rememberReferenceForCompact(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, omrobjectptr_t toObject)
 	{
 
 		if (NULL != toObject) {
@@ -345,7 +345,7 @@ public:
 	 * @param toObject object being pointed
 	 */
 	MMINLINE void
-	rememberReferenceForCopyForward(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, fomrobject_t* toObject)
+	rememberReferenceForCopyForward(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, omrobjectptr_t toObject)
 	{
 		if (NULL != toObject) {
 			/* We use the XOR and region mask of object pointers to determine if the objects share the same region.

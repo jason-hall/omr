@@ -676,21 +676,21 @@ MM_InterRegionRememberedSet::rememberReferenceForMarkInternal(MM_EnvironmentVLHG
 }
 
 void
-MM_InterRegionRememberedSet::rememberReferenceForCompactInternal(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, fomrobject_t* toObject)
+MM_InterRegionRememberedSet::rememberReferenceForCompactInternal(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, omrobjectptr_t toObject)
 {
 	MM_HeapRegionDescriptorVLHGC *toRegion = (MM_HeapRegionDescriptorVLHGC *)_heapRegionManager->tableDescriptorForAddress(toObject);
 	rememberReferenceInternal(env, fromObject, toRegion);
 }
 
 void
-MM_InterRegionRememberedSet::rememberReferenceForCopyForwardInternal(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, fomrobject_t* toObject)
+MM_InterRegionRememberedSet::rememberReferenceForCopyForwardInternal(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, omrobjectptr_t toObject)
 {
 	MM_HeapRegionDescriptorVLHGC *toRegion = (MM_HeapRegionDescriptorVLHGC *)_heapRegionManager->tableDescriptorForAddress(toObject);
 	rememberReferenceInternal(env, fromObject, toRegion);
 }
 
 bool
-MM_InterRegionRememberedSet::isReferenceRememberedForMark(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, fomrobject_t* toObject)
+MM_InterRegionRememberedSet::isReferenceRememberedForMark(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, omrobjectptr_t toObject)
 {
 	/* if CardList not overflowed, check there first */
 	if (NULL != toObject) {
