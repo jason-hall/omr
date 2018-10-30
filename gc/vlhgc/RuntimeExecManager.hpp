@@ -79,7 +79,8 @@ private:
 	/**
 	 * Listen to native bind events in order to intercept java/lang/UNIXProcess.forkAndExec()
 	 */
-	static void jniNativeBindHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
+
+	// OMRTODO static void jniNativeBindHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 
 	/**
 	 * Java 6 wrapper for forkAndExec native function

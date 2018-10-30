@@ -69,7 +69,7 @@ public:
 	/**
 	 * @param objectPtr the array object to be processed
 	 */
-	GC_PointerArrayIterator(OMR_VM *omrVM, fomrobject_t *objectPtr)
+	GC_PointerArrayIterator(OMR_VM *omrVM, omrobjectptr_t objectPtr)
 #if !defined(J9VM_GC_ARRAYLETS)
 	  :_contiguousArrayIterator(omrVM)
 #elif defined(J9VM_GC_HYBRID_ARRAYLETS)
@@ -95,7 +95,7 @@ public:
 	{
 	}
 
-	MMINLINE void initialize(OMR_VM *omrVM, fomrobject_t *objectPtr)
+	MMINLINE void initialize(OMR_VM *omrVM, omrobjectptr_t objectPtr)
 	{
 #if defined(J9VM_GC_ARRAYLETS)
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)

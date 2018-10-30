@@ -70,13 +70,13 @@ public:
 	 * @param object  address of and object
 	 * return  true if success, false if the list is overflowed
 	 */
-	void add(MM_EnvironmentVLHGC *env, fomrobject_t *object);
+	void add(MM_EnvironmentVLHGC *env, omrobjectptr_t object);
 
 	/**
 	 * Search the list and check if this object's card is remembered.
 	 * Caller assures the list is not overflowed. Not thread safe.
 	 */
-	bool isRemembered(MM_EnvironmentVLHGC *env, fomrobject_t *object);
+	bool isRemembered(MM_EnvironmentVLHGC *env, omrobjectptr_t object);
 	/**
 	 * Search the list and check if this card is remembered.
 	 * Caller assures the list is not overflowed. Not thread safe.

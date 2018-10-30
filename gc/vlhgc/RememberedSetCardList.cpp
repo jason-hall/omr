@@ -22,7 +22,7 @@
 
 #include "HeapRegionManager.hpp"
 #include "RememberedSetCardList.hpp"
-#include "VMThreadListIterator.hpp"
+// OMRTODO needed? #include "VMThreadListIterator.hpp"
 #include "InterRegionRememberedSet.hpp"
 
 bool
@@ -124,9 +124,9 @@ MM_RememberedSetCardList::clear(MM_EnvironmentVLHGC *env)
 }
 
 void
-MM_RememberedSetCardList::add(MM_EnvironmentVLHGC *env, fomrobject_t *object)
+MM_RememberedSetCardList::add(MM_EnvironmentVLHGC *env, omrobjectptr_t object)
 {
-	MM_InterRegionRememberedSet *interRegionRememberedSet = MM_GCExtensionsBase::getExtensions(env)->interRegionRememberedSet;
+	MM_InterRegionRememberedSet *interRegionRememberedSet = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->interRegionRememberedSet;
 	MM_RememberedSetCard card = interRegionRememberedSet->getRememberedSetCardFromfomrobject_t(object);
 	MM_RememberedSetCardBucket *bucket = mapToBucket(env);
 	bucket->add(env, card);
@@ -150,9 +150,9 @@ MM_RememberedSetCardList::isRemembered(MM_EnvironmentVLHGC *env, MM_RememberedSe
 }
 
 bool
-MM_RememberedSetCardList::isRemembered(MM_EnvironmentVLHGC *env, fomrobject_t *object)
+MM_RememberedSetCardList::isRemembered(MM_EnvironmentVLHGC *env, omrobjectptr_t object)
 {
-	MM_InterRegionRememberedSet *interRegionRememberedSet = MM_GCExtensionsBase::getExtensions(env)->interRegionRememberedSet;
+	MM_InterRegionRememberedSet *interRegionRememberedSet = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->interRegionRememberedSet;
 	return isRemembered(env, interRegionRememberedSet->getRememberedSetCardFromfomrobject_t(object));
 }
 

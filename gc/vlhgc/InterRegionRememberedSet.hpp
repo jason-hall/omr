@@ -98,7 +98,7 @@ private:
 	 * @param fromObject object (its slot) pointing from
 	 * @param toRegion region being pointed at
 	 */
-	MMINLINE void rememberReferenceInternal(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, MM_HeapRegionDescriptorVLHGC *toRegion);
+	MMINLINE void rememberReferenceInternal(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, MM_HeapRegionDescriptorVLHGC *toRegion);
 	
 	/**
 	 * Find a region (its RSCL) to overflow. Look for a list with large number of buffers.
@@ -364,7 +364,7 @@ public:
 	 * @return the card which the object belongs to
 	 */
 	MMINLINE MM_RememberedSetCard
-	getRememberedSetCardFromfomrobject_t(fomrobject_t* object)
+	getRememberedSetCardFromfomrobject_t(omrobjectptr_t object)
 	{
 		void *cardAddress = (void *)((UDATA)object & ~((UDATA)CARD_SIZE - 1));
 		return convertRememberedSetCardFromHeapAddress(cardAddress);
@@ -451,7 +451,7 @@ public:
 	 * @param toObject object being pointed
 	 * @return true if the reference is remembered
 	 */
-	bool isReferenceRememberedForMark(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, fomrobject_t* toObject);
+	bool isReferenceRememberedForMark(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, omrobjectptr_t toObject);
 
 	/**
 	 * Clears the inter-region references that point to toRegion

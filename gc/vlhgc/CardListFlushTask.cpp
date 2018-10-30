@@ -96,7 +96,7 @@ void
 MM_CardListFlushTask::run(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 
 	/* this function has knowledge of the collection set, which is only valid during a PGC */
 	Assert_MM_true(MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION == env->_cycleState->_collectionType);

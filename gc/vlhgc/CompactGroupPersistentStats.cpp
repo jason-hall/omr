@@ -40,7 +40,7 @@
 MM_CompactGroupPersistentStats * 
 MM_CompactGroupPersistentStats::allocateCompactGroupPersistentStats(MM_EnvironmentVLHGC *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	UDATA compactGroupCount = MM_CompactGroupManager::getCompactGroupMaxCount(env);
 	UDATA persistentStatsAllocationSize = sizeof(MM_CompactGroupPersistentStats) * compactGroupCount;
 
@@ -74,7 +74,7 @@ MM_CompactGroupPersistentStats::allocateCompactGroupPersistentStats(MM_Environme
 void 
 MM_CompactGroupPersistentStats::killCompactGroupPersistentStats(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats)
 {
-	MM_GCExtensionsBase::getExtensions(env)->getForge()->free(persistentStats);
+	MM_GCExtensionsBase::getExtensions(env->getOmrVM())->getForge()->free(persistentStats);
 }
 
 
@@ -86,7 +86,7 @@ MM_CompactGroupPersistentStats::deriveWeightedSurvivalRates(MM_EnvironmentVLHGC 
 	const double thisWeight = 1.0 - olderWeight;
 	Trc_MM_CompactGroupPersistentStats_deriveWeightedSurvivalRates_Entry(env->getLanguageVMThread(), olderWeight);
 	
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_GlobalAllocationManagerTarok *allocationManager = (MM_GlobalAllocationManagerTarok*)extensions->globalAllocationManager;
 	
 	UDATA regionMaxAge = extensions->tarokRegionMaxAge;
@@ -135,7 +135,7 @@ MM_CompactGroupPersistentStats::calculateAgeGroupFractionsAtEdenBoundary(MM_Envi
 		}
 	}
 
-	MM_GlobalAllocationManagerTarok *allocationManager = (MM_GlobalAllocationManagerTarok*)MM_GCExtensionsBase::getExtensions(env)->globalAllocationManager;
+	MM_GlobalAllocationManagerTarok *allocationManager = (MM_GlobalAllocationManagerTarok*)MM_GCExtensionsBase::getExtensions(env->getOmrVM())->globalAllocationManager;
 	UDATA managedAllocationContextCount = allocationManager->getManagedAllocationContextCount();
 	UDATA nonCommonAllocationContextCount = 1;
 	if (managedAllocationContextCount > 1) {
@@ -151,7 +151,7 @@ MM_CompactGroupPersistentStats::calculateAgeGroupFractionsAtEdenBoundary(MM_Envi
 void
 MM_CompactGroupPersistentStats::updateProjectedSurvivalRate(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStatsArray, UDATA compactGroup)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	const double newObservationWeight = 0.2;
 	 MM_CompactGroupPersistentStats *persistentStats = &persistentStatsArray[compactGroup];
 
@@ -330,7 +330,7 @@ MM_CompactGroupPersistentStats::updateProjectedSurvivalRate(MM_EnvironmentVLHGC 
 void
 MM_CompactGroupPersistentStats::deriveProjectedLiveBytesStats(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	GC_HeapRegionIteratorVLHGC regionIterator(extensions->heapRegionManager, MM_HeapRegionDescriptor::ALL);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 
@@ -382,7 +382,7 @@ MM_CompactGroupPersistentStats::resetLiveBytesStats(MM_EnvironmentVLHGC *env, MM
 void
 MM_CompactGroupPersistentStats::calculateLiveBytesForRegion(MM_EnvironmentVLHGC *env,  MM_CompactGroupPersistentStats *persistentStats, UDATA compactGroup, MM_HeapRegionDescriptorVLHGC *region, UDATA measuredLiveBytes, UDATA projectedLiveBytes)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	U_64 allocatedSinceLastPGC = ((MM_IncrementalGenerationalGC *)extensions->getGlobalCollector())->getAllocatedSinceLastPGC();
 
 	persistentStats[compactGroup]._measuredLiveBytesBeforeCollectInCollectedSet += measuredLiveBytes;
@@ -472,7 +472,7 @@ MM_CompactGroupPersistentStats::calculateLiveBytesForRegion(MM_EnvironmentVLHGC 
 void
 MM_CompactGroupPersistentStats::updateStatsBeforeCopyForward(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
 	UDATA regionSize = regionManager->getRegionSize();
 	GC_HeapRegionIteratorVLHGC regionIterator(regionManager);
@@ -527,7 +527,7 @@ MM_CompactGroupPersistentStats::updateStatsAfterCopyForward(MM_EnvironmentVLHGC 
 void
 MM_CompactGroupPersistentStats::updateStatsBeforeSweep(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
 	UDATA regionSize = regionManager->getRegionSize();
 	GC_HeapRegionIteratorVLHGC regionIterator(regionManager);
@@ -557,7 +557,7 @@ MM_CompactGroupPersistentStats::updateStatsBeforeSweep(MM_EnvironmentVLHGC *env,
 void
 MM_CompactGroupPersistentStats::updateStatsAfterSweep(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
 	UDATA regionSize = regionManager->getRegionSize();
 	GC_HeapRegionIteratorVLHGC regionIterator(regionManager, MM_HeapRegionDescriptor::ALL);
@@ -586,7 +586,7 @@ MM_CompactGroupPersistentStats::updateStatsAfterSweep(MM_EnvironmentVLHGC *env, 
 void
 MM_CompactGroupPersistentStats::updateStatsBeforeCompact(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
 	UDATA regionSize = regionManager->getRegionSize();
 	GC_HeapRegionIteratorVLHGC regionIterator(regionManager);
@@ -605,9 +605,11 @@ MM_CompactGroupPersistentStats::updateStatsBeforeCompact(MM_EnvironmentVLHGC *en
 
 				persistentStats[compactGroup]._measuredLiveBytesBeforeCollectInGroup += measuredLiveBytes;
 				persistentStats[compactGroup]._projectedLiveBytesBeforeCollectInGroup += projectedLiveBytes;
+#if defined (OMR_GC_MODRON_COMPACTION)
 				if (region->_compactData._shouldCompact) {
 					calculateLiveBytesForRegion(env, persistentStats, compactGroup, region, measuredLiveBytes, projectedLiveBytes);
 				}
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 			}
 		}
 	}
@@ -616,7 +618,7 @@ MM_CompactGroupPersistentStats::updateStatsBeforeCompact(MM_EnvironmentVLHGC *en
 void
 MM_CompactGroupPersistentStats::updateStatsAfterCompact(MM_EnvironmentVLHGC *env, MM_CompactGroupPersistentStats *persistentStats)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
 	UDATA regionSize = regionManager->getRegionSize();
 	GC_HeapRegionIteratorVLHGC regionIterator(regionManager, MM_HeapRegionDescriptor::ALL);
@@ -633,9 +635,11 @@ MM_CompactGroupPersistentStats::updateStatsAfterCompact(MM_EnvironmentVLHGC *env
 				UDATA measuredLiveBytes = regionSize - completeFreeMemory;
 
 				persistentStats[compactGroup]._measuredLiveBytesAfterCollectInGroup += measuredLiveBytes;
+#if defined (OMR_GC_MODRON_COMPACTION)
 				if (region->_compactData._shouldCompact) {
 					persistentStats[compactGroup]._measuredLiveBytesAfterCollectInCollectedSet += measuredLiveBytes;
 				}
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 			}
 		}
 	}
@@ -645,7 +649,7 @@ MM_CompactGroupPersistentStats::updateStatsAfterCompact(MM_EnvironmentVLHGC *env
 void
 MM_CompactGroupPersistentStats::initProjectedLiveBytes(MM_EnvironmentVLHGC *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	GC_HeapRegionIteratorVLHGC regionIterator(extensions->heapRegionManager, MM_HeapRegionDescriptor::ALL);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	UDATA regionSize = extensions->heapRegionManager->getRegionSize();
@@ -685,7 +689,7 @@ MM_CompactGroupPersistentStats::updateStatsAfterCollectionOperation(MM_Environme
 void
 MM_CompactGroupPersistentStats::decayProjectedLiveBytesForRegions(MM_EnvironmentVLHGC *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	GC_HeapRegionIteratorVLHGC regionIterator(extensions->heapRegionManager, MM_HeapRegionDescriptor::ALL);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	MM_CompactGroupPersistentStats * persistentStats = extensions->compactGroupPersistentStats;

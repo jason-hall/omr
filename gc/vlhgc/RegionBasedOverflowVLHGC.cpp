@@ -69,7 +69,7 @@ MM_RegionBasedOverflowVLHGC::initialize(MM_EnvironmentBase *env)
 
 MM_RegionBasedOverflowVLHGC::MM_RegionBasedOverflowVLHGC(MM_EnvironmentBase *env, MM_WorkPackets *workPackets, U_8 overflowFlag)
 	: MM_WorkPacketOverflow(env, workPackets)
-	,_extensions(MM_GCExtensionsBase::getExtensions(env))
+	,_extensions(MM_GCExtensionsBase::getExtensions(env->getOmrVM()))
 	,_heapRegionManager(_extensions->heapRegionManager)
 	,_overflowFlag(overflowFlag)
 {
@@ -149,8 +149,8 @@ void
 MM_RegionBasedOverflowVLHGC::overflowItemInternal(MM_EnvironmentBase *env, void *item, MM_OverflowType type)
 {
 	MM_EnvironmentVLHGC *envVLHGC = MM_EnvironmentVLHGC::getEnvironment(env);
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(envVLHGC);
-	fomrobject_t *objectPtr = (fomrobject_t *)item;
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(envVLHGC->getOmrVM());
+	omrobjectptr_t objectPtr = (omrobjectptr_t)item;
 
 	/* If element is an array split tag then ignore it */
 	if ((PACKET_INVALID_OBJECT != (UDATA)item) && (PACKET_ARRAY_SPLIT_TAG !=  (((UDATA)objectPtr) & PACKET_ARRAY_SPLIT_TAG))) {
@@ -186,6 +186,7 @@ MM_RegionBasedOverflowVLHGC::overflowItemInternal(MM_EnvironmentBase *env, void 
 		GC_ObjectModel::ScanType scantype = extensions->objectModel.getScanType(objectPtr);
 
 		if (GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT == scantype) {
+#if 0 // OMRTODO
 			/* since we popped this object from the work packet, it is our responsibility to record it in the list of reference objects */
 			/* we know that the object must be in the collection set because it was on a work packet */
 			/* we don't need to process cleared or enqueued references */ 
@@ -216,10 +217,12 @@ MM_RegionBasedOverflowVLHGC::overflowItemInternal(MM_EnvironmentBase *env, void 
 					J9GC_J9VMJAVALANGREFERENCE_STATE(envVLHGC, objectPtr) = GC_ObjectModel::REF_STATE_CLEARED;
 				}
 			}
+#endif
 		} else if ((OMR_GC_CYCLE_TYPE_VLHGC_PARTIAL_GARBAGE_COLLECT == envVLHGC->_cycleState->_type) && (GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT == scantype)) {
 			/* JAZZ 63834 handle new ownableSynchronizer processing in overflowed case
 		 	 * new processing currently only for CopyForwardScheme colloctor
 		 	 */
+#if 0 // OMRTODO
 			if (isEvacuateRegion(region) && (NULL != _extensions->accessBarrier->isObjectInOwnableSynchronizerList(objectPtr))) {
 				/* To avoid adding duplication item (abort case the object need to be rescan and interregions remembered objects) 
 				 * To avoid adding constructing object 
@@ -231,6 +234,7 @@ MM_RegionBasedOverflowVLHGC::overflowItemInternal(MM_EnvironmentBase *env, void 
 					envVLHGC->_markVLHGCStats._ownableSynchronizerSurvived += 1;
 				}
 			}
+#endif
 		}
 	}
 }

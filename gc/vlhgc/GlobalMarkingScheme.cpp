@@ -707,7 +707,7 @@ MM_GlobalMarkingScheme::scanPointerArrayObjectSplit(MM_EnvironmentVLHGC *env, om
 		}
 		
 		/* TODO: this iterator scans the array backwards - change it to forward, and optimize it since we can guarantee the range will be contiguous */
-		GC_PointerArrayIterator pointerArrayIterator(_omrVM, (fomrobject_t *)objectPtr);
+		GC_PointerArrayIterator pointerArrayIterator(_omrVM, objectPtr);
 		pointerArrayIterator.setIndex(startIndex + slotsToScan);
 		for (UDATA scanCount = 0; scanCount < slotsToScan; scanCount++) {
 			GC_SlotObject *slotObject = pointerArrayIterator.nextSlot();

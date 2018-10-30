@@ -50,7 +50,7 @@
 
 MM_ProjectedSurvivalCollectionSetDelegate::MM_ProjectedSurvivalCollectionSetDelegate(MM_EnvironmentBase *env, MM_HeapRegionManager *manager)
 	: MM_BaseNonVirtual()
-	, _extensions(MM_GCExtensionsBase::getExtensions(env))
+	, _extensions(MM_GCExtensionsBase::getExtensions(env->getOmrVM()))
 	, _regionManager(manager)
 	, _setSelectionDataTable(NULL)
 	, _dynamicSelectionList(NULL)
@@ -211,7 +211,9 @@ MM_ProjectedSurvivalCollectionSetDelegate::selectRegion(MM_EnvironmentVLHGC *env
 
 	region->_markData._shouldMark = true;
 	region->_reclaimData._shouldReclaim = true;
+#if defined (OMR_GC_MODRON_COMPACTION)
 	region->_compactData._shouldCompact = false;
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 	region->_defragmentationTarget = false;
 
 	_extensions->compactGroupPersistentStats[compactGroup]._regionsInRegionCollectionSetForPGC += 1;
@@ -474,7 +476,9 @@ MM_ProjectedSurvivalCollectionSetDelegate::createRegionCollectionSetForGlobalGC(
 		if (region->containsObjects()) {
 			region->_reclaimData._shouldReclaim = true;
 			region->_defragmentationTarget = false;
+#if defined (OMR_GC_MODRON_COMPACTION)
 			region->_compactData._shouldCompact = false;
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 		}
 	}
 }
@@ -538,7 +542,7 @@ MM_ProjectedSurvivalCollectionSetDelegate::rateOfReturnCalculationBeforeSweep(MM
 					stats->_reclaimStats._regionCountOverflow += 1;
 				}
 			} else if(region->isArrayletLeaf()) {
-				MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)region->_allocateData.getSpine());
+				/* OMRTODO getSpine? MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)region->_allocateData.getSpine());
 				Assert_MM_true(parentRegion->containsObjects());
 				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, parentRegion)];
 
@@ -551,7 +555,7 @@ MM_ProjectedSurvivalCollectionSetDelegate::rateOfReturnCalculationBeforeSweep(MM
 				}
 				if(!parentRegion->getRememberedSetCardList()->isAccurate()) {
 					stats->_reclaimStats._regionCountArrayletLeafOverflow += 1;
-				}
+				}*/
 			}
 		}
 	}
@@ -579,7 +583,7 @@ MM_ProjectedSurvivalCollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_
 					stats->_reclaimStats._regionDarkMatterAfter +=  memoryPool->getDarkMatterBytes();
 				}
 			} else if(region->isArrayletLeaf()) {
-				MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)region->_allocateData.getSpine());
+				/* MM_HeapRegionDescriptorVLHGC *parentRegion = (MM_HeapRegionDescriptorVLHGC *)_regionManager->regionDescriptorForAddress((void *)region->_allocateData.getSpine());
 				Assert_MM_true(parentRegion->containsObjects());
 				SetSelectionData *stats = &_setSelectionDataTable[MM_CompactGroupManager::getCompactGroupNumber(env, parentRegion)];
 
@@ -589,7 +593,7 @@ MM_ProjectedSurvivalCollectionSetDelegate::rateOfReturnCalculationAfterSweep(MM_
 				if(!parentRegion->_sweepData._alreadySwept) {
 					stats->_reclaimStats._reclaimableRegionCountAfter += 1;
 					stats->_reclaimStats._reclaimableRegionCountArrayletLeafAfter += 1;
-				}
+				}*/
 			}
 		}
 

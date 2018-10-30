@@ -28,7 +28,6 @@
 
 #include "omr.h"
 #include "omrcfg.h"
-#include ""
 #include "omrgcconsts.h"
 #include "modronapicore.hpp"
 #include "modronopt.h"
@@ -36,16 +35,16 @@
 
 #include <string.h>
 
-#include "mmhook_internal.h"
+// OMRTODO #include "mmhook_internal.h"
 
 #include "AllocateDescription.hpp"
 #include "AllocationContextTarok.hpp"
 #include "AllocationFailureStats.hpp"
 #include "CardListFlushTask.hpp"
 #include "CardTable.hpp"
-#include "ClassLoaderIterator.hpp"
-#include "ClassLoaderManager.hpp"
-#include "ClassLoaderRememberedSet.hpp"
+// OMRTODO #include "ClassLoaderIterator.hpp"
+//#include "ClassLoaderManager.hpp"
+//#include "ClassLoaderRememberedSet.hpp"
 #include "CollectionStatisticsVLHGC.hpp"
 #include "CompactGroupManager.hpp"
 #include "CompactGroupPersistentStats.hpp"
@@ -55,8 +54,8 @@
 #include "Dispatcher.hpp"
 #include "EnvironmentVLHGC.hpp"
 #include "EnvironmentBase.hpp"
-#include "FinalizeListManager.hpp"
-#include "FinalizerSupport.hpp"
+// OMRTODO #include "FinalizeListManager.hpp"
+// OMRTODO #include "FinalizerSupport.hpp"
 #include "GlobalAllocationManager.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapStats.hpp"
@@ -68,10 +67,13 @@
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
 #include "MemorySubSpaceTarok.hpp"
+#include "MixedObjectIterator.hpp"
 #include "OMRVMInterface.hpp"
 #include "ParallelTask.hpp"
-#include "ReferenceChainWalker.hpp"
-#include "VLHGCAccessBarrier.hpp"
+#include "PointerArrayIterator.hpp"
+#include "ReferenceChainWalkerMarkMap.hpp"
+// OMRTODO #include "ReferenceChainWalker.hpp"
+// #include "VLHGCAccessBarrier.hpp"
 #include "WorkPacketsIterator.hpp"
 #include "WorkPacketsVLHGC.hpp"
 #include "WorkStack.hpp"
@@ -81,14 +83,14 @@
  */
 MM_IncrementalGenerationalGC::MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager)
 	: MM_GlobalCollector()
-	, _javaVM((OMR_VM*)env->getOmrVM()->_language_vm)
-	, _extensions(MM_GCExtensionsBase::getExtensions(env))
-	, _portLibrary(((OMR_VM *)(env->getLanguageVM()))->portLibrary)
+	, _omrVM(env->getOmrVM())
+	, _extensions(MM_GCExtensionsBase::getExtensions(env->getOmrVM()))
+	, _portLibrary(env->getPortLibrary())
 	, _regionManager(manager)		
 	, _configuredSubspace(NULL)
 	, _markMapManager(NULL)
 	, _interRegionRememberedSet(NULL)
-	, _classLoaderRememberedSet(NULL)
+	// OMRTODO , _classLoaderRememberedSet(NULL)
 	, _copyForwardDelegate(env)
 	, _globalMarkDelegate(env)
 	, _partialMarkDelegate(env)
@@ -143,12 +145,12 @@ MM_IncrementalGenerationalGC::kill(MM_EnvironmentBase *env)
 bool
 MM_IncrementalGenerationalGC::initialize(MM_EnvironmentVLHGC *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	J9HookInterface** mmPrivateHooks = J9_HOOK_INTERFACE(extensions->privateHookInterface);
 	
-	if (NULL == (extensions->accessBarrier = MM_VLHGCAccessBarrier::newInstance(env))) {
-		goto error_no_memory;
-	}
+	// OMRTODO if (NULL == (extensions->accessBarrier = MM_VLHGCAccessBarrier::newInstance(env))) {
+	// OMRTODO 	goto error_no_memory;
+	// OMRTODO }
  	
  	if (NULL == (_markMapManager = MM_MarkMapManager::newInstance(env))) {
  		goto error_no_memory;
@@ -159,10 +161,10 @@ MM_IncrementalGenerationalGC::initialize(MM_EnvironmentVLHGC *env)
  	}
 	extensions->interRegionRememberedSet = _interRegionRememberedSet;
 
- 	if (NULL == (_classLoaderRememberedSet = MM_ClassLoaderRememberedSet::newInstance(env))) {
- 		goto error_no_memory;
- 	}
-	extensions->classLoaderRememberedSet = _classLoaderRememberedSet;
+ 	// OMRTODO if (NULL == (_classLoaderRememberedSet = MM_ClassLoaderRememberedSet::newInstance(env))) {
+ 	// OMRTODO 	goto error_no_memory;
+ 	// OMRTODO }
+	// OMRTODO extensions->classLoaderRememberedSet = _classLoaderRememberedSet;
 
 	if(!_copyForwardDelegate.initialize(env)) {
 		goto error_no_memory;
@@ -213,8 +215,10 @@ MM_IncrementalGenerationalGC::initialize(MM_EnvironmentVLHGC *env)
 		extensions->tarokAllocationAgeExponentBase = 1.0;
 	}
 
+#if defined (OMR_GC_MODRON_COMPACTION)
 	/* The Tarok policy always compacts since it can't handle dark matter in scan-only regions */
 	extensions->compactOnGlobalGC = true;
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 
 	/**
 	 * Set maximum allocation age based on logical maximum age
@@ -284,11 +288,11 @@ MM_IncrementalGenerationalGC::tearDown(MM_EnvironmentVLHGC *env)
 {
 	_delegate.tearDown(env);
 
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
-	if (extensions->accessBarrier) {
-		extensions->accessBarrier->kill(env);
-		extensions->accessBarrier = NULL;
-	}
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
+	// OMRTODO if (extensions->accessBarrier) {
+	// OMRTODO 	extensions->accessBarrier->kill(env);
+	// OMRTODO 	extensions->accessBarrier = NULL;
+	// OMRTODO }
 
 	_copyForwardDelegate.tearDown(env);
 
@@ -314,10 +318,10 @@ MM_IncrementalGenerationalGC::tearDown(MM_EnvironmentVLHGC *env)
 		extensions->interRegionRememberedSet = NULL;
 	}
 
-	if(NULL != _classLoaderRememberedSet) {
-		_classLoaderRememberedSet->kill(env);
-		_classLoaderRememberedSet = NULL;
-	}
+	// OMRTODO if(NULL != _classLoaderRememberedSet) {
+	// OMRTODO 	_classLoaderRememberedSet->kill(env);
+	// OMRTODO 	_classLoaderRememberedSet = NULL;
+	// OMRTODO }
 	
 	if (NULL != extensions->compactGroupPersistentStats) {
 		MM_CompactGroupPersistentStats::killCompactGroupPersistentStats(env, extensions->compactGroupPersistentStats);
@@ -347,24 +351,24 @@ MM_IncrementalGenerationalGC::setupBeforeGC(MM_EnvironmentBase *env)
 	env->_cycleState->_finalizationRequired = false;
 #endif /* J9VM_GC_FINALIZATION */
 	
-	_classLoaderRememberedSet->setupBeforeGC(env);
+	// OMRTODO _classLoaderRememberedSet->setupBeforeGC(env);
 	
 }
 
 void
 MM_IncrementalGenerationalGC::masterThreadGarbageCollect(MM_EnvironmentBase *envBase, MM_AllocateDescription *allocDescription, bool initMarkMap, bool rebuildMarkBits)
 {
-	OMR_VMThread 	*vmThread = (OMR_VMThread *)envBase->getOmrVMThread()->_language_vmthread;
+	OMR_VMThread *vmThread = (OMR_VMThread *)envBase->getOmrVMThread();
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 
 	/* We might be running in a context of either main or master thread, but either way we must have exclusive access */
-	Assert_MM_mustHaveExclusiveVMAccess(env->getOmrVMThread());
+	Assert_MM_mustHaveExclusiveVMAccess(vmThread);
 
 	Assert_MM_true(NULL != _extensions->rememberedSetCardBucketPool);
 	
 	if (_extensions->trackMutatorThreadCategory) {
 		/* This thread is doing GC work, account for the time spent into the GC bucket */
-		omrthread_set_category(vmThread->osThread, J9THREAD_CATEGORY_SYSTEM_GC_THREAD, J9THREAD_TYPE_SET_GC);
+		omrthread_set_category(omrthread_self(), J9THREAD_CATEGORY_SYSTEM_GC_THREAD, J9THREAD_TYPE_SET_GC);
 	}
 	
 	switch(env->_cycleState->_collectionType) {
@@ -384,7 +388,7 @@ MM_IncrementalGenerationalGC::masterThreadGarbageCollect(MM_EnvironmentBase *env
 
 	if (_extensions->trackMutatorThreadCategory) {
 		/* Done doing GC, reset the category back to the old one */
-		omrthread_set_category(vmThread->osThread, 0, J9THREAD_TYPE_SET_GC);
+		omrthread_set_category(omrthread_self(), 0, J9THREAD_TYPE_SET_GC);
 	}
 	
 	/* The flag to terminate concurrent operation is only valid until the next pause.  Since that pause is now complete,
@@ -421,10 +425,10 @@ MM_IncrementalGenerationalGC::globalMarkPhase(MM_EnvironmentVLHGC *env, bool inc
 	Assert_MM_false(_workPacketsForPartialGC->getOverflowFlag());
 	Assert_MM_true(&_persistentGlobalMarkPhaseState == env->_cycleState);
 	
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats.clear();
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._startTime = j9time_hires_clock();
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._startTime = omrtime_hires_clock();
 
 	if (incrementalMark) {
 		reportGMPMarkStart(env);
@@ -447,7 +451,7 @@ MM_IncrementalGenerationalGC::globalMarkPhase(MM_EnvironmentVLHGC *env, bool inc
 	Assert_MM_true(NULL != env->_cycleState->_markMap);
 	Assert_MM_true(NULL != env->_cycleState->_workPackets);
 
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._endTime = j9time_hires_clock();
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._endTime = omrtime_hires_clock();
 	/* Accumulate the mark increment stats into persistent GMP state*/
 	_persistentGlobalMarkPhaseState._vlhgcCycleStats.merge(&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats);
 	
@@ -638,7 +642,7 @@ MM_IncrementalGenerationalGC::preMasterGCThreadInitialize(MM_EnvironmentBase *en
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 	_interRegionRememberedSet->setRememberedSetCardBucketPoolForMasterThread(env);
 
-	if (!_markMapManager->collectorStartup(MM_GCExtensionsBase::getExtensions(envBase->getExtensions()))) {
+	if (!_markMapManager->collectorStartup(MM_GCExtensionsBase::getExtensions(envBase->getOmrVM()))) {
 		Assert_MM_unreachable();
 	}
 }
@@ -650,7 +654,7 @@ MM_IncrementalGenerationalGC::initializeTaxationThreshold(MM_EnvironmentVLHGC *e
 	 * This may be called from either real Master GC thread or acting Master GC thread (any thread that caused GC in absence of real Master GC thread).
 	 *  taxationThreshold will be initialized only once.
 	 */
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 
 	/* we need to calculate the taxation threshold after the initial heap inflation, which happens before collectorStartup */
 	_taxationThreshold = _schedulingDelegate.getInitialTaxationThreshold(env);
@@ -723,16 +727,16 @@ void
 MM_IncrementalGenerationalGC::globalGCHookSysEnd(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
 {
 	MM_SystemGCEndEvent* event = (MM_SystemGCEndEvent*)eventData;
-	OMR_VMThread* vmThread = static_cast<OMR_VMThread*>(event->currentThread->_language_vmthread);
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(event->currentThread);
-	PORT_ACCESS_FROM_VMC((OMR_VMThread*)event->currentThread->_language_vmthread);
+	OMR_VMThread* vmThread = event->currentThread;
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(vmThread);
+	OMRPORT_ACCESS_FROM_OMRVMTHREAD(vmThread);
 
 	Trc_MM_IncrementalGenerationalGC_globalGCHookSysEnd(vmThread, extensions->globalVLHGCStats.gcCount);
 	
 	/* Save end time so at next AF we can get a realistic time outside GC.
 	 * While it will never be used it may be useful for debugging. 
 	 */
-	extensions->heap->getResizeStats()->setLastAFEndTime(j9time_hires_clock());
+	extensions->heap->getResizeStats()->setLastAFEndTime(omrtime_hires_clock());
 }
 
 void
@@ -740,11 +744,11 @@ MM_IncrementalGenerationalGC::globalGCHookAFCycleStart(J9HookInterface** hook, U
 {
 	MM_AllocationFailureCycleStartEvent* event = (MM_AllocationFailureCycleStartEvent*)eventData;
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(event->currentThread);
-	PORT_ACCESS_FROM_VMC((OMR_VMThread*)event->currentThread->_language_vmthread);
+	OMRPORT_ACCESS_FROM_OMRVMTHREAD(event->currentThread);
 	
 	Trc_MM_IncrementalGenerationalGC_globalGCHookAFStart(event->currentThread->_language_vmthread, extensions->globalVLHGCStats.gcCount);
 	
-	extensions->heap->getResizeStats()->setThisAFStartTime(j9time_hires_clock());
+	extensions->heap->getResizeStats()->setThisAFStartTime(omrtime_hires_clock());
 	extensions->heap->getResizeStats()->setLastTimeOutsideGC();
 	extensions->heap->getResizeStats()->setGlobalGCCountAtAF(extensions->globalVLHGCStats.gcCount);
 }
@@ -754,12 +758,12 @@ MM_IncrementalGenerationalGC::globalGCHookAFCycleEnd(J9HookInterface** hook, UDA
 {
 	MM_AllocationFailureCycleEndEvent* event = (MM_AllocationFailureCycleEndEvent*)eventData;
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(event->currentThread);
-	PORT_ACCESS_FROM_VMC((OMR_VMThread*)event->currentThread->_language_vmthread);
+	OMRPORT_ACCESS_FROM_OMRVMTHREAD(event->currentThread);
 	
-	Trc_MM_IncrementalGenerationalGC_globalGCHookAFEnd(event->currentThread->_language_vmthread, extensions->globalVLHGCStats.gcCount);
+	Trc_MM_IncrementalGenerationalGC_globalGCHookAFEnd(event->currentThread, extensions->globalVLHGCStats.gcCount);
 	
 	/* ..and remember time of last AF end */
-	extensions->heap->getResizeStats()->setLastAFEndTime(j9time_hires_clock());
+	extensions->heap->getResizeStats()->setLastAFEndTime(omrtime_hires_clock());
 	extensions->heap->getResizeStats()->updateHeapResizeStats();
 }
 
@@ -769,12 +773,12 @@ MM_IncrementalGenerationalGC::globalGCHookIncrementStart(J9HookInterface** hook,
 {
 	MM_TarokIncrementStartEvent* event = (MM_TarokIncrementStartEvent*)eventData;
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(event->currentThread);
-	PORT_ACCESS_FROM_VMC((OMR_VMThread*)event->currentThread->_language_vmthread);
+	OMRPORT_ACCESS_FROM_OMRVMTHREAD(event->currentThread);
 	
-	Trc_MM_IncrementalGenerationalGC_globalGCHookIncrementStart(event->currentThread->_language_vmthread, extensions->globalVLHGCStats.gcCount);
+	Trc_MM_IncrementalGenerationalGC_globalGCHookIncrementStart(event->currentThread, extensions->globalVLHGCStats.gcCount);
 	
 	/* treat increments like allocation failures for the purposes of resize statistics */
-	extensions->heap->getResizeStats()->setThisAFStartTime(j9time_hires_clock());
+	extensions->heap->getResizeStats()->setThisAFStartTime(omrtime_hires_clock());
 	extensions->heap->getResizeStats()->setLastTimeOutsideGC();
 	extensions->heap->getResizeStats()->setGlobalGCCountAtAF(extensions->globalVLHGCStats.gcCount);
 }
@@ -784,12 +788,12 @@ MM_IncrementalGenerationalGC::globalGCHookIncrementEnd(J9HookInterface** hook, U
 {
 	MM_TarokIncrementEndEvent* event = (MM_TarokIncrementEndEvent*)eventData;
 	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(event->currentThread);
-	PORT_ACCESS_FROM_VMC((OMR_VMThread*)event->currentThread->_language_vmthread);
+	OMRPORT_ACCESS_FROM_OMRVMTHREAD(event->currentThread);
 	
-	Trc_MM_IncrementalGenerationalGC_globalGCHookIncrementEnd(event->currentThread->_language_vmthread, extensions->globalVLHGCStats.gcCount);
+	Trc_MM_IncrementalGenerationalGC_globalGCHookIncrementEnd(event->currentThread, extensions->globalVLHGCStats.gcCount);
 	
 	/* ..and remember time of last AF end */
-	extensions->heap->getResizeStats()->setLastAFEndTime(j9time_hires_clock());
+	extensions->heap->getResizeStats()->setLastAFEndTime(omrtime_hires_clock());
 	extensions->heap->getResizeStats()->updateHeapResizeStats();
 }
 
@@ -818,7 +822,7 @@ void
 MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, MM_MemorySubSpace *subspace, MM_AllocateDescription *allocDescription)
 {
 	MM_EnvironmentVLHGC *env = (MM_EnvironmentVLHGC *)envModron;
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	Assert_MM_mustHaveExclusiveVMAccess(env->getOmrVMThread());
 
@@ -836,7 +840,7 @@ MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, 
 		ALWAYS_TRIGGER_J9HOOK_MM_PRIVATE_TAROK_INCREMENT_START(
 			_extensions->privateHookInterface,
 			env->getOmrVMThread(),
-			j9time_hires_clock(),
+			omrtime_hires_clock(),
 			J9HOOK_MM_PRIVATE_TAROK_INCREMENT_START,
 			_extensions->globalVLHGCStats.incrementCount,
 			&commonData,
@@ -910,7 +914,7 @@ MM_IncrementalGenerationalGC::taxationEntryPoint(MM_EnvironmentBase *envModron, 
 		ALWAYS_TRIGGER_J9HOOK_MM_PRIVATE_TAROK_INCREMENT_END(
 			_extensions->privateHookInterface,
 			env->getOmrVMThread(),
-			j9time_hires_clock(),
+			omrtime_hires_clock(),
 			J9HOOK_MM_PRIVATE_TAROK_INCREMENT_END,
 			env->getExclusiveAccessTime(),
 			&commonData
@@ -1152,13 +1156,13 @@ MM_IncrementalGenerationalGC::runGlobalGarbageCollection(MM_EnvironmentVLHGC *en
 void
 MM_IncrementalGenerationalGC::reportGCCycleFinalIncrementEnding(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_CommonGCData commonData;
 	TRIGGER_J9HOOK_MM_OMR_GC_CYCLE_END(
 		extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_OMR_GC_CYCLE_END,
 		extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type,
@@ -1298,7 +1302,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingCopyForward(MM_Environme
 {
 	Trc_MM_IncrementalGenerationalGC_partialGarbageCollectUsingCopyForward_Entry(env->getLanguageVMThread());
 	
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	/* Record stats before a copy forward */
 	UDATA freeMemoryForSurvivor = _extensions->getHeap()->getActualFreeMemorySize();
@@ -1334,10 +1338,10 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingCopyForward(MM_Environme
 	_copyForwardDelegate.preCopyForwardSetup(env);
 
 	reportCopyForwardStart(env);
-	U_64 startTimeOfCopyForward = j9time_hires_clock();
+	U_64 startTimeOfCopyForward = omrtime_hires_clock();
 
 	bool successful = _copyForwardDelegate.performCopyForwardForPartialGC(env);
-	U_64 endTimeOfCopyForward = j9time_hires_clock();
+	U_64 endTimeOfCopyForward = omrtime_hires_clock();
 
 	/* Record stats after a copy forward */
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._freeMemoryAfter = _extensions->getHeap()->getActualFreeMemorySize();
@@ -1405,7 +1409,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingCopyForward(MM_Environme
 void
 MM_IncrementalGenerationalGC::partialGarbageCollectUsingMarkCompact(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	
 	if (_extensions->tarokUseProjectedSurvivalCollectionSet) {
 		_projectedSurvivalCollectionSetDelegate.createRegionCollectionSetForPartialGC(env);
@@ -1422,7 +1426,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingMarkCompact(MM_Environme
 	Assert_MM_true(env->_cycleState->_markMap == _markMapManager->getPartialGCMap());
 	Assert_MM_true(env->_cycleState->_workPackets == _workPacketsForPartialGC);
 
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._startTime = j9time_hires_clock();
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._startTime = omrtime_hires_clock();
 	reportPGCMarkStart(env);
 
 	MM_MarkMap *savedMapState = NULL;
@@ -1434,7 +1438,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingMarkCompact(MM_Environme
 	if (NULL != savedMapState) {
 		_markMapManager->reportDeletedObjects(env, savedMapState, env->_cycleState->_markMap);
 	}
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._endTime = j9time_hires_clock();
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._endTime = omrtime_hires_clock();
 	reportPGCMarkEnd(env);
 
 	postMarkMapCompletion(env);
@@ -1717,7 +1721,7 @@ bool
 MM_IncrementalGenerationalGC::isMarked(void *objectPtr)
 {
 	/* the mark map used for PGC should be the most accurate */
-	return _markMapManager->getPartialGCMap()->isBitSet(static_cast<fomrobject_t*>(objectPtr));
+	return _markMapManager->getPartialGCMap()->isBitSet(static_cast<omrobjectptr_t>(objectPtr));
 }
 
 void
@@ -1746,7 +1750,7 @@ MM_IncrementalGenerationalGC::verifyMarkMapClosure(MM_EnvironmentVLHGC *env, MM_
 			UDATA *regionTop = (UDATA *)region->getHighAddress();
 
 			MM_HeapMapIterator iterator = MM_HeapMapIterator(_extensions, markMap, regionBase, regionTop, false);
-			fomrobject_t *object = NULL;
+			omrobjectptr_t object = NULL;
 			while (NULL != (object = iterator.nextObject())) {
 #if 0 //OMRTODO
 				/* first, check the validity of the object's class */
@@ -1760,7 +1764,7 @@ MM_IncrementalGenerationalGC::verifyMarkMapClosure(MM_EnvironmentVLHGC *env, MM_
 				/* now that we know the class is valid, verify that this object only refers to other marked objects */
 				switch(_extensions->objectModel.getScanType(object)) {
 				case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
-					Assert_MM_true(GC_ObjectModel::REF_STATE_REMEMBERED != J9GC_J9VMJAVALANGREFERENCE_STATE(env, object));
+					// OMRTODO Assert_MM_true(GC_ObjectModel::REF_STATE_REMEMBERED != J9GC_J9VMJAVALANGREFERENCE_STATE(env, object));
 					/* fall through */
 				case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 				case GC_ObjectModel::SCAN_MIXED_OBJECT:
@@ -1769,11 +1773,11 @@ MM_IncrementalGenerationalGC::verifyMarkMapClosure(MM_EnvironmentVLHGC *env, MM_
 				{
 					// OMRTODO Assert_MM_true(_extensions->classLoaderRememberedSet->isInstanceRemembered(env, object));
 					
-					GC_MixedObjectIterator mixedObjectIterator(_javaVM->omrVM, object);
+					GC_MixedObjectIterator mixedObjectIterator(_omrVM, object);
 					GC_SlotObject *slotObject = NULL;
 		
 					while (NULL != (slotObject = mixedObjectIterator.nextSlot())) {
-						fomrobject_t *target = slotObject->readReferenceFromSlot();
+						omrobjectptr_t target = slotObject->readReferenceFromSlot();
 						Assert_MM_true((NULL == target) || markMap->isBitSet(target));
 					}
 				}
@@ -1782,11 +1786,11 @@ MM_IncrementalGenerationalGC::verifyMarkMapClosure(MM_EnvironmentVLHGC *env, MM_
 				{
 					// OMRTODO Assert_MM_true(_extensions->classLoaderRememberedSet->isInstanceRemembered(env, object));
 	
-					GC_PointerArrayIterator pointerArrayIterator(_javaVM, object);
+					GC_PointerArrayIterator pointerArrayIterator(_omrVM, object);
 					GC_SlotObject *slotObject = NULL;
 		
 					while (NULL != (slotObject = pointerArrayIterator.nextSlot())) {
-						fomrobject_t *target = slotObject->readReferenceFromSlot();
+						omrobjectptr_t target = slotObject->readReferenceFromSlot();
 						Assert_MM_true((NULL == target) || markMap->isBitSet(target));
 					}
 				}
@@ -1901,7 +1905,7 @@ MM_IncrementalGenerationalGC::reportGlobalGCEnd(MM_EnvironmentVLHGC *env)
 void
 MM_IncrementalGenerationalGC::triggerGlobalGCStartHook(MM_EnvironmentVLHGC *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	
 	/* passed as UDATA since that is what the hook requires */
 	UDATA isExplicitGC = 0;
@@ -1914,7 +1918,7 @@ MM_IncrementalGenerationalGC::triggerGlobalGCStartHook(MM_EnvironmentVLHGC *env)
 	TRIGGER_J9HOOK_MM_OMR_GLOBAL_GC_START(
 		_extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_OMR_GLOBAL_GC_START,
 		_extensions->globalVLHGCStats.gcCount,
 		0,
@@ -1926,7 +1930,7 @@ MM_IncrementalGenerationalGC::triggerGlobalGCStartHook(MM_EnvironmentVLHGC *env)
 void
 MM_IncrementalGenerationalGC::triggerGlobalGCEndHook(MM_EnvironmentVLHGC *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	
 	/* these are assigned to temporary variable out-of-line since some preprocessors get confused if you have directives in macros */
 	UDATA approximateActiveFreeMemorySize = 0;
@@ -1936,7 +1940,7 @@ MM_IncrementalGenerationalGC::triggerGlobalGCEndHook(MM_EnvironmentVLHGC *env)
 	TRIGGER_J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(), 
-		j9time_hires_clock(), 
+		omrtime_hires_clock(), 
 		J9HOOK_MM_PRIVATE_REPORT_MEMORY_USAGE,
 		_extensions->getForge()->getCurrentStatistics()
 	);
@@ -1944,7 +1948,7 @@ MM_IncrementalGenerationalGC::triggerGlobalGCEndHook(MM_EnvironmentVLHGC *env)
 	TRIGGER_J9HOOK_MM_OMR_GLOBAL_GC_END(
 		_extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_OMR_GLOBAL_GC_END,
 		static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.getSTWWorkStackOverflowOccured(),
 		static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.getSTWWorkStackOverflowCount(),
@@ -1967,13 +1971,13 @@ MM_IncrementalGenerationalGC::triggerGlobalGCEndHook(MM_EnvironmentVLHGC *env)
 void
 MM_IncrementalGenerationalGC::reportCopyForwardStart(MM_EnvironmentVLHGC *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	Trc_MM_CopyForwardStart(env->getLanguageVMThread());
 	TRIGGER_J9HOOK_MM_PRIVATE_COPY_FORWARD_START(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_COPY_FORWARD_START,
 		&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats);
 }
@@ -1981,13 +1985,13 @@ MM_IncrementalGenerationalGC::reportCopyForwardStart(MM_EnvironmentVLHGC *env)
 void
 MM_IncrementalGenerationalGC::reportCopyForwardEnd(MM_EnvironmentVLHGC *env, U_64 timeTaken)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	Trc_MM_CopyForwardEnd(env->getLanguageVMThread());
 	TRIGGER_J9HOOK_MM_PRIVATE_COPY_FORWARD_END(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_COPY_FORWARD_END,
 		&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats,
 		&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats,
@@ -2010,14 +2014,14 @@ void
 MM_IncrementalGenerationalGC::preConcurrentInitializeStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats)
 {
 	Assert_MM_true(isConcurrentWorkAvailable(env));
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	stats->_cycleID = _persistentGlobalMarkPhaseState._verboseContextID;
 	stats->_scanTargetInBytes = _globalMarkPhaseIncrementBytesStillToScan;
 	TRIGGER_J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_START(
 			_extensions->privateHookInterface,
 			env->getOmrVMThread(),
-			j9time_hires_clock(),
+			omrtime_hires_clock(),
 			J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_START,
 			stats);
 }
@@ -2061,14 +2065,14 @@ void
 MM_IncrementalGenerationalGC::postConcurrentUpdateStatsAndReport(MM_EnvironmentBase *env, MM_ConcurrentPhaseStatsBase *stats, UDATA bytesConcurrentlyScanned)
 {
 	Assert_MM_false(isConcurrentWorkAvailable(env));
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	stats->_bytesScanned = bytesConcurrentlyScanned;
 	stats->_terminationWasRequested = _forceConcurrentTermination;
 	TRIGGER_J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_END(
 			_extensions->privateHookInterface,
 			env->getOmrVMThread(),
-			j9time_hires_clock(),
+			omrtime_hires_clock(),
 			J9HOOK_MM_PRIVATE_CONCURRENT_PHASE_END,
 			stats);
 }
@@ -2108,8 +2112,8 @@ MM_IncrementalGenerationalGC::reportGMPCycleEnd(MM_EnvironmentBase *env)
 void
 MM_IncrementalGenerationalGC::reportGCCycleStart(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_CommonGCData commonData;
 
 	Trc_MM_CycleStart(env->getLanguageVMThread(), env->_cycleState->_type, _extensions->getHeap()->getActualFreeMemorySize());
@@ -2117,7 +2121,7 @@ MM_IncrementalGenerationalGC::reportGCCycleStart(MM_EnvironmentBase *env)
 	TRIGGER_J9HOOK_MM_OMR_GC_CYCLE_START(
 		extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_OMR_GC_CYCLE_START,
 		extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type);
@@ -2126,8 +2130,8 @@ MM_IncrementalGenerationalGC::reportGCCycleStart(MM_EnvironmentBase *env)
 void
 MM_IncrementalGenerationalGC::reportGCCycleContinue(MM_EnvironmentBase *env, UDATA oldCycleStateType)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_CommonGCData commonData;
 
 	Trc_MM_CycleContinue(env->getLanguageVMThread(), oldCycleStateType, env->_cycleState->_type, _extensions->getHeap()->getActualFreeMemorySize());
@@ -2135,7 +2139,7 @@ MM_IncrementalGenerationalGC::reportGCCycleContinue(MM_EnvironmentBase *env, UDA
 	TRIGGER_J9HOOK_MM_OMR_GC_CYCLE_CONTINUE(
 		extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_OMR_GC_CYCLE_CONTINUE,
 		extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		oldCycleStateType,
@@ -2145,8 +2149,8 @@ MM_IncrementalGenerationalGC::reportGCCycleContinue(MM_EnvironmentBase *env, UDA
 void
 MM_IncrementalGenerationalGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_CommonGCData commonData;
 
 	Trc_MM_CycleEnd(env->getLanguageVMThread(), env->_cycleState->_type, _extensions->getHeap()->getActualFreeMemorySize());
@@ -2154,7 +2158,7 @@ MM_IncrementalGenerationalGC::reportGCCycleEnd(MM_EnvironmentBase *env)
 	TRIGGER_J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END(
 		extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_GC_POST_CYCLE_END,
 		extensions->getHeap()->initializeCommonGCData(env, &commonData),
 		env->_cycleState->_type,
@@ -2231,22 +2235,23 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 				}
 			}
 			if (region->isArrayletLeaf()) {
-				fomrobject_t *spine = region->_allocateData.getSpine();
+#if 0 // OMRTODO getSpine() stuff
+				omrobjectptr_t spine = region->_allocateData.getSpine();
 
 				/* if we recently (end of GMP) unloaded classes, but have not done sweep yet (just about to do it),
 				 * there might be unswept arraylet leaf regions, for which we must not try to access class data (for scan type).
 				 * Therefore, we count these arraylets as 'unknown' type.
 				 */
-				if (classesPotentiallyUnloaded && !isMarked((fomrobject_t *)spine)) {
+				if (classesPotentiallyUnloaded && !isMarked((omrobjectptr_t)spine)) {
 					stats->_arrayletUnknownLeaves += 1;
 					/* is this first arraylet leaf? */
-					if (region->getLowAddress() == mmPointerFromToken((OMR_VMThread*)env->getLanguageVMThread(), _extensions->indexableObjectModel.getArrayoidPointer(spine)[0])) {
+					if (region->getLowAddress() == mmPointerFromToken(env->getOmrVMThread(), _extensions->indexableObjectModel.getArrayoidPointer((omrarrayptr_t)spine)[0])) {
 						stats->_arrayletUnknownObjects += 1;
 					}
-				} else if (GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT == _extensions->objectModel.getScanType((fomrobject_t *)spine)) {
+				} else if (GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT == _extensions->objectModel.getScanType(spine)) {
 					stats->_arrayletReferenceLeaves += 1;
 					/* is this first arraylet leaf? */
-					if (region->getLowAddress() == mmPointerFromToken((OMR_VMThread*)env->getLanguageVMThread(), _extensions->indexableObjectModel.getArrayoidPointer(spine)[0])) {
+					if (region->getLowAddress() == mmPointerFromToken(env->getOmrVMThread(), _extensions->indexableObjectModel.getArrayoidPointer((omrarrayptr_t)spine)[0])) {
 						stats->_arrayletReferenceObjects += 1;
 						UDATA numExternalArraylets = _extensions->indexableObjectModel.numExternalArraylets(spine);
 						if (stats->_largestReferenceArraylet < numExternalArraylets) {
@@ -2254,9 +2259,9 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 						}
 					}
 				} else {
-					Assert_MM_true(GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT == _extensions->objectModel.getScanType((fomrobject_t *)spine));
+					Assert_MM_true(GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT == _extensions->objectModel.getScanType(spine));
 					stats->_arrayletPrimitiveLeaves += 1;
-					if (region->getLowAddress() == mmPointerFromToken((OMR_VMThread*)env->getLanguageVMThread(), _extensions->indexableObjectModel.getArrayoidPointer(spine)[0])) {
+					if (region->getLowAddress() == mmPointerFromToken(env->getOmrVMThread(), _extensions->indexableObjectModel.getArrayoidPointer((omrarrayptr_t)spine)[0])) {
 						stats->_arrayletPrimitiveObjects += 1;
 						UDATA numExternalArraylets = _extensions->indexableObjectModel.numExternalArraylets(spine);
 						if (stats->_largestPrimitiveArraylet < numExternalArraylets) {
@@ -2264,6 +2269,7 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 						}
 					}
 				}
+#endif
 			}
 
 		}
@@ -2273,14 +2279,14 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 void
 MM_IncrementalGenerationalGC::reportGCIncrementStart(MM_EnvironmentBase *env, const char *incrementDescription, UDATA incrementCount)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_CollectionStatisticsVLHGC *stats = (MM_CollectionStatisticsVLHGC *)env->_cycleState->_collectionStatistics;
 	stats->collectCollectionStatistics(env, stats);
 	stats->_incrementDescription = incrementDescription;
 	stats->_incrementCount = incrementCount;
 	/* TODO: we could find if we did any class unloading in last GMP and pass more precise info to exportStats */
 	exportStats((MM_EnvironmentVLHGC *)env, stats, _schedulingDelegate.isGlobalSweepRequired());
-	stats->_startTime = j9time_hires_clock();
+	stats->_startTime = omrtime_hires_clock();
 
 	intptr_t rc = omrthread_get_process_times(&stats->_startProcessTimes);
 	switch (rc){
@@ -2306,7 +2312,7 @@ MM_IncrementalGenerationalGC::reportGCIncrementStart(MM_EnvironmentBase *env, co
 void
 MM_IncrementalGenerationalGC::reportGCIncrementEnd(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_CollectionStatisticsVLHGC *stats = (MM_CollectionStatisticsVLHGC *)env->_cycleState->_collectionStatistics;
 	stats->collectCollectionStatistics(env, stats);
 	exportStats((MM_EnvironmentVLHGC *)env, stats);
@@ -2324,7 +2330,7 @@ MM_IncrementalGenerationalGC::reportGCIncrementEnd(MM_EnvironmentBase *env)
 		Assert_MM_unreachable();
 	}
 
-	stats->_endTime = j9time_hires_clock();
+	stats->_endTime = omrtime_hires_clock();
 
 	TRIGGER_J9HOOK_MM_PRIVATE_GC_INCREMENT_END(
 		_extensions->privateHookInterface,
@@ -2338,26 +2344,26 @@ MM_IncrementalGenerationalGC::reportGCIncrementEnd(MM_EnvironmentBase *env)
 void
 MM_IncrementalGenerationalGC::reportMarkStart(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_MarkStart(env->getLanguageVMThread());
 
 	TRIGGER_J9HOOK_MM_PRIVATE_MARK_START(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_MARK_START);
 }
 
 void
 MM_IncrementalGenerationalGC::reportMarkEnd(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_MarkEnd(env->getLanguageVMThread());
 
 	TRIGGER_J9HOOK_MM_PRIVATE_MARK_END(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_MARK_END);
 }
 
@@ -2468,10 +2474,10 @@ MM_IncrementalGenerationalGC::postMarkMapCompletion(MM_EnvironmentVLHGC *env)
 #if defined(J9VM_GC_FINALIZATION)
    /* Alert the finalizer if work needs to be done */
 	if(env->_cycleState->_finalizationRequired) {
-		omrthread_monitor_enter(_javaVM->finalizeMasterMonitor);
-		_javaVM->finalizeMasterFlags |= J9_FINALIZE_FLAGS_MASTER_WAKE_UP;
-		omrthread_monitor_notify_all(_javaVM->finalizeMasterMonitor);
-		omrthread_monitor_exit(_javaVM->finalizeMasterMonitor);
+		omrthread_monitor_enter(_omrVM->finalizeMasterMonitor);
+		_omrVM->finalizeMasterFlags |= J9_FINALIZE_FLAGS_MASTER_WAKE_UP;
+		omrthread_monitor_notify_all(_omrVM->finalizeMasterMonitor);
+		omrthread_monitor_exit(_omrVM->finalizeMasterMonitor);
 	}
 #endif /* J9VM_GC_FINALIZATION */
 }
@@ -2482,7 +2488,7 @@ void
 MM_IncrementalGenerationalGC::unloadDeadClassLoaders(MM_EnvironmentVLHGC *env)
 {
 	Trc_MM_IncrementalGenerationalGC_unloadDeadClassLoaders_entry(env->getLanguageVMThread());
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_ClassUnloadStats *classUnloadStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._classUnloadStats;
 	/* it's not safe to read or write the classLoader->gcFlags unless we're in a class unloading cycle */
 	Assert_MM_true(env->_cycleState->_dynamicClassUnloadingEnabled);
@@ -2491,15 +2497,15 @@ MM_IncrementalGenerationalGC::unloadDeadClassLoaders(MM_EnvironmentVLHGC *env)
 	UDATA vmState = env->pushVMstate(J9VMSTATE_GC_UNLOADING_DEAD_CLASSLOADERS);
 	/* we are going to report that we started unloading, even though we might decide that there is no work to do */
 	reportClassUnloadingStart(env);
-	classUnloadStats->_startTime = j9time_hires_clock();
+	classUnloadStats->_startTime = omrtime_hires_clock();
 
 	/* Count the classes we're unloading and perform class-specific clean up work for each unloading class.
 	 * If we're unloading any classes, perform common class-unloading clean up.
 	 */
-	classUnloadStats->_startSetupTime = j9time_hires_clock();
+	classUnloadStats->_startSetupTime = omrtime_hires_clock();
 	J9ClassLoader *classLoadersUnloadedList = _extensions->classLoaderManager->identifyClassLoadersToUnload(env, env->_cycleState->_markMap, classUnloadStats);
 	_extensions->classLoaderManager->cleanUpClassLoadersStart(env, classLoadersUnloadedList, env->_cycleState->_markMap, classUnloadStats);
-	classUnloadStats->_endSetupTime = j9time_hires_clock();
+	classUnloadStats->_endSetupTime = omrtime_hires_clock();
 	if (0 < (classUnloadStats->_classesUnloadedCount + classUnloadStats->_classLoaderUnloadedCount)) {
 		U_64 quiesceTime = _extensions->classLoaderManager->enterClassUnloadMutex(env);
 		classUnloadStats->_classUnloadMutexQuiesceTime = quiesceTime;
@@ -2514,7 +2520,7 @@ MM_IncrementalGenerationalGC::unloadDeadClassLoaders(MM_EnvironmentVLHGC *env)
 		/* Free the class memory segments associated with dead classLoaders, unload (free) the dead classLoaders that don't
 		 * require finalization, and perform any final clean up after the dead classLoaders are gone.
 		 */
-		classUnloadStats->_endScanTime = j9time_hires_clock();
+		classUnloadStats->_endScanTime = omrtime_hires_clock();
 		classUnloadStats->_startPostTime = classUnloadStats->_endScanTime;
 		/* enqueue all the segments we just salvaged from the dead class loaders for delayed free (this work was historically attributed in the unload end operation so it goes after the timer start) */
 		_extensions->classLoaderManager->enqueueUndeadClassSegments(reclaimedSegments);
@@ -2525,7 +2531,7 @@ MM_IncrementalGenerationalGC::unloadDeadClassLoaders(MM_EnvironmentVLHGC *env)
 			_extensions->classLoaderManager->flushUndeadSegments(env);
 			Trc_MM_FlushUndeadSegments_Exit(env->getLanguageVMThread());
 		}
-		classUnloadStats->_endPostTime = j9time_hires_clock();
+		classUnloadStats->_endPostTime = omrtime_hires_clock();
 
 		_extensions->classLoaderManager->exitClassUnloadMutex(env);
 	}
@@ -2533,7 +2539,7 @@ MM_IncrementalGenerationalGC::unloadDeadClassLoaders(MM_EnvironmentVLHGC *env)
 	_extensions->classLoaderManager->setLastUnloadNumOfClassLoaders();
 	_extensions->classLoaderManager->setLastUnloadNumOfAnonymousClasses();
 
-	classUnloadStats->_endTime = j9time_hires_clock();
+	classUnloadStats->_endTime = omrtime_hires_clock();
 	reportClassUnloadingEnd(env);
 	env->popVMstate(vmState);
 
@@ -2543,20 +2549,20 @@ MM_IncrementalGenerationalGC::unloadDeadClassLoaders(MM_EnvironmentVLHGC *env)
 void
 MM_IncrementalGenerationalGC::reportClassUnloadingStart(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_ClassUnloadingStart(env->getLanguageVMThread());
 
 	TRIGGER_J9HOOK_MM_PRIVATE_CLASS_UNLOADING_START(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_CLASS_UNLOADING_START);
 }
 
 void
 MM_IncrementalGenerationalGC::reportClassUnloadingEnd(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_ClassUnloadStats *classUnloadStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._classUnloadStats;
 
 	Trc_MM_ClassUnloadingEnd(env->getLanguageVMThread(),
@@ -2566,7 +2572,7 @@ MM_IncrementalGenerationalGC::reportClassUnloadingEnd(MM_EnvironmentBase *env)
 	TRIGGER_J9HOOK_MM_CLASS_UNLOADING_END(
 		_extensions->hookInterface,
 		(OMR_VMThread *)env->getLanguageVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_CLASS_UNLOADING_END,
 		classUnloadStats->_endTime - classUnloadStats->_startTime,
 		classUnloadStats->_classLoaderUnloadedCount,

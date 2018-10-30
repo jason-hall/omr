@@ -34,13 +34,13 @@
 #include "PartialMarkDelegate.hpp"
 
 #include "CardTable.hpp"
-#include "ClassLoaderIterator.hpp"
-#include "ClassLoaderManager.hpp"
+// OMRTODO #include "ClassLoaderIterator.hpp"
+// OMRTODO #include "ClassLoaderManager.hpp"
 #include "CycleState.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentVLHGC.hpp"
-#include "FinalizeListManager.hpp"
-#include "FinalizerSupport.hpp"
+// OMRTODO #include "FinalizeListManager.hpp"
+// OMRTODO #include "FinalizerSupport.hpp"
 #include "GCExtensionsBase.hpp"
 #include "GlobalMarkCardScrubber.hpp"
 #include "HeapMapIterator.hpp"
@@ -54,7 +54,7 @@ bool
 MM_PartialMarkDelegate::initialize(MM_EnvironmentVLHGC *env)
 {
 	_javaVM = (OMR_VM *)env->getLanguageVM();
-	_extensions = MM_GCExtensionsBase::getExtensions(env);
+	_extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 
 	if(NULL == (_markingScheme = MM_PartialMarkingScheme::newInstance(env))) {
 		goto error_no_memory;

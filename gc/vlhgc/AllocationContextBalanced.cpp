@@ -23,7 +23,6 @@
 
 #include "omr.h"
 #include "omrcfg.h"
-#include ""
 #include "omrgcconsts.h"
 #include "modronopt.h"
 #include "ModronAssertions.h"
@@ -66,7 +65,7 @@ MM_AllocationContextBalanced::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	if (!_contextLock.initialize(env, &extensions->lnrlOptions, "MM_AllocationContextBalanced:_contextLock")) {
 		return false;
 	}
@@ -92,7 +91,7 @@ MM_AllocationContextBalanced::initialize(MM_EnvironmentBase *env)
 	}
 
 	_cachedReplenishPoint = this;
-	_heapRegionManager = MM_GCExtensionsBase::getExtensions(env)->heapRegionManager;
+	_heapRegionManager = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->heapRegionManager;
 	
 	return true;
 }
@@ -512,7 +511,7 @@ MM_AllocationContextBalanced::recycleRegion(MM_EnvironmentVLHGC *env, MM_HeapReg
 			_freeListLock.acquire();
 			_idleMPBPRegions.insertRegion(region);
 			_freeListLock.release();
-			MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+			MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 			if (extensions->tarokEnableExpensiveAssertions) {
 				void *low = region->getLowAddress();
 				void *high = region->getHighAddress();
@@ -532,7 +531,7 @@ MM_AllocationContextBalanced::recycleRegion(MM_EnvironmentVLHGC *env, MM_HeapReg
 			Assert_MM_true(NULL == allocateData->getNextArrayletLeafRegion());
 			Assert_MM_true(NULL == allocateData->getSpine());
 
-			if (MM_GCExtensionsBase::getExtensions(env)->tarokDebugEnabled) {
+			if (MM_GCExtensionsBase::getExtensions(env->getOmrVM())->tarokDebugEnabled) {
 				/* poison the unused region so we can identify it in a crash (to be removed when 1953 is stable) */
 				memset(region->getLowAddress(), 0x0F, region->getSize());
 			}
@@ -645,7 +644,7 @@ MM_AllocationContextBalanced::acquireMPBPRegionFromHeap(MM_EnvironmentBase *env,
 
 	/* _nextToSteal will be this if NUMA is not enabled */
 	if ((NULL == region) && (_nextToSteal != this)) {
-		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 		Assert_MM_true(0 != extensions->_numaManager.getAffinityLeaderCount());
 		/* we didn't get any memory yet we are in a NUMA system so we should steal from a foreign node */
 		MM_AllocationContextBalanced *firstTheftAttempt = _nextToSteal;
@@ -675,7 +674,7 @@ MM_AllocationContextBalanced::acquireFreeRegionFromHeap(MM_EnvironmentBase *env)
 
 	/* _nextToSteal will be this if NUMA is not enabled */
 	if ((NULL == region) && (_nextToSteal != this)) {
-		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 		Assert_MM_true(0 != extensions->_numaManager.getAffinityLeaderCount());
 		/* we didn't get any memory yet we are in a NUMA system so we should steal from a foreign node */
 		MM_AllocationContextBalanced *firstTheftAttempt = _nextToSteal;
@@ -923,7 +922,7 @@ void *
 MM_AllocationContextBalanced::lockedReplenishAndAllocate(MM_EnvironmentBase *env, MM_ObjectAllocationInterface *objectAllocationInterface, MM_AllocateDescription *allocateDescription, MM_MemorySubSpace::AllocationType allocationType)
 {
 	void * result = NULL;
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	UDATA regionSize = extensions->regionSize;
 	
 	UDATA contiguousAllocationSize;
@@ -977,7 +976,7 @@ MM_AllocationContextBalanced::lockedReplenishAndAllocate(MM_EnvironmentBase *env
 MM_HeapRegionDescriptorVLHGC *
 MM_AllocationContextBalanced::internalReplenishActiveRegion(MM_EnvironmentBase *env, bool payTax)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	UDATA regionSize = extensions->regionSize;
 	MM_HeapRegionDescriptorVLHGC *newRegion = NULL;
 
@@ -1073,7 +1072,7 @@ MM_AllocationContextBalanced::setNumaAffinityForThread(MM_EnvironmentBase *env)
 {
 	bool success = true;
 
-	bool hasPhysicalNUMASupport = MM_GCExtensionsBase::getExtensions(env)->_numaManager.isPhysicalNUMASupported();
+	bool hasPhysicalNUMASupport = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->_numaManager.isPhysicalNUMASupported();
 	if (hasPhysicalNUMASupport && (0 != getNumaNode())) {
 		/* TODO: should we try to read the affinity first and find the best node? */
 		success = env->setNumaAffinity(_freeProcessorNodes, _freeProcessorNodeCount);

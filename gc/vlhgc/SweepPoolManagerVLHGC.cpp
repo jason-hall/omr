@@ -72,7 +72,7 @@ MM_SweepPoolManagerVLHGC::calculateTrailingDetails(MM_ParallelSweepChunk *sweepC
 	 */
 	UDATA trailingCandidateByteCount = (UDATA)MM_Bits::convertSlotsToBytes(trailingCandidateSlotCount);
 
-	UDATA projection = _extensions->objectModel.getConsumedSizeInBytesWithHeader((fomrobject_t *)(trailingCandidate - J9MODRON_HEAP_SLOTS_PER_MARK_BIT)) - (J9MODRON_HEAP_SLOTS_PER_MARK_BIT * sizeof(UDATA));
+	UDATA projection = _extensions->objectModel.getConsumedSizeInBytesWithHeader((omrobjectptr_t)(trailingCandidate - J9MODRON_HEAP_SLOTS_PER_MARK_BIT)) - (J9MODRON_HEAP_SLOTS_PER_MARK_BIT * sizeof(UDATA));
 	if(projection > trailingCandidateByteCount) {
 		projection -= trailingCandidateByteCount;
 		sweepChunk->projection = projection;
@@ -307,8 +307,8 @@ MM_SweepPoolManagerVLHGC::addFreeMemory(MM_EnvironmentBase *env, MM_ParallelSwee
 		calculateTrailingDetails(sweepChunk, address, size);
 	} else {
 		UDATA freeSizeInBytes = MM_Bits::convertSlotsToBytes(size);
-		fomrobject_t *object = (fomrobject_t *)(address - J9MODRON_HEAP_SLOTS_PER_MARK_BIT);
-		Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(object));
+		omrobjectptr_t object = (omrobjectptr_t)(address - J9MODRON_HEAP_SLOTS_PER_MARK_BIT);
+		// OMRTODO Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(object));
 		UDATA objectSizeDelta = 
 			_extensions->objectModel.getConsumedSizeInBytesWithHeader(object)
 			- (J9MODRON_HEAP_SLOTS_PER_MARK_BIT * sizeof(UDATA));

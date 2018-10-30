@@ -28,7 +28,6 @@
 
 #include "omr.h"
 #include "omrcfg.h"
-#include ""
 #include "omrgcconsts.h"
 
 #include "MarkMapManager.hpp"

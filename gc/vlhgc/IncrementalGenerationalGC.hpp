@@ -65,7 +65,7 @@ class MM_WorkPacketsVLHGC;
 class MM_IncrementalGenerationalGC : public MM_GlobalCollector
 {
 protected:
-	OMR_VM *_javaVM;
+	OMR_VM *_omrVM;
 	MM_GCExtensionsBase *_extensions;
 
 private:

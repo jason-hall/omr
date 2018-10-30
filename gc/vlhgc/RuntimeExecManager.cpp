@@ -23,8 +23,8 @@
 
 #include "omr.h"
 #include "omrcfg.h"
-#include "j2sever.h"
-#include "rommeth.h"
+// OMRTODO #include "j2sever.h"
+//#include "rommeth.h"
 
 #include "RuntimeExecManager.hpp"
 
@@ -57,8 +57,9 @@ bool
 MM_RuntimeExecManager::initialize(MM_EnvironmentBase *env)
 {
 	bool result = true;
+#if 0 // OMRTODO
 #if defined (LINUX) && !defined(J9ZTPF)
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	if (extensions->_numaManager.isPhysicalNUMASupported()) {
 		OMR_VM* javaVM = (OMR_VM *)extensions->getOmrVM()->_language_vm;
 		J9HookInterface **vmHookInterface = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
@@ -69,12 +70,14 @@ MM_RuntimeExecManager::initialize(MM_EnvironmentBase *env)
 		}
 	}
 #endif /* defined (LINUX) && !defined (J9ZTPF) */
+#endif
 	return result;
 }
 
 void
 MM_RuntimeExecManager::tearDown(MM_EnvironmentBase *env)
 {
+#if 0 // OMRTODO
 #if defined (LINUX) && !defined(J9ZTPF)
 	OMR_VM* javaVM = (OMR_VM *)env->getLanguageVM();
 	J9HookInterface **vmHookInterface = javaVM->internalVMFunctions->getVMHookInterface(javaVM);
@@ -84,8 +87,10 @@ MM_RuntimeExecManager::tearDown(MM_EnvironmentBase *env)
 
 	_savedForkAndExecNative = NULL;
 #endif /* defined (LINUX) && !defined (J9ZTPF) */
+#endif
 }
 
+#if 0 // OMRTODO
 #if defined (LINUX) && !defined(J9ZTPF)
 void 
 MM_RuntimeExecManager::jniNativeBindHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData)
@@ -134,7 +139,6 @@ MM_RuntimeExecManager::jniNativeBindHook(J9HookInterface** hook, UDATA eventNum,
 	}
 }
 
-#if 0 OMRTODO
 jint
 MM_RuntimeExecManager::forkAndExecNativeV6(JNIEnv* jniEnv, jobject receiver, jobject arg1, jobject arg2, jint arg3, jobject arg4, jint arg5, jobject arg6, jboolean arg7, jobject arg8, jobject arg9, jobject arg10)
 {
@@ -144,7 +148,7 @@ MM_RuntimeExecManager::forkAndExecNativeV6(JNIEnv* jniEnv, jobject receiver, job
 	
 	Trc_MM_RuntimeExecManager_forkAndExecNativeV6_Entry(vmThread);
 	
-	MM_GlobalAllocationManagerTarok *allocationManager = (MM_GlobalAllocationManagerTarok *)MM_GCExtensionsBase::getExtensions(env)->globalAllocationManager;
+	MM_GlobalAllocationManagerTarok *allocationManager = (MM_GlobalAllocationManagerTarok *)MM_GCExtensionsBase::getExtensions(env->getOmrVM())->globalAllocationManager;
 	MM_RuntimeExecManager *runtimeExecManager = &allocationManager->_runtimeExecManager;
 	forkAndExecNativeFunctionV6 savedForkAndExecNative = (forkAndExecNativeFunctionV6)runtimeExecManager->_savedForkAndExecNative;
 	MM_AllocationContextTarok *allocationContext = (MM_AllocationContextTarok *)env->getAllocationContext();
@@ -173,7 +177,7 @@ MM_RuntimeExecManager::forkAndExecNativeV7(JNIEnv* jniEnv, jobject receiver, job
 	
 	Trc_MM_RuntimeExecManager_forkAndExecNativeV7_Entry(vmThread);
 	
-	MM_GlobalAllocationManagerTarok *allocationManager = (MM_GlobalAllocationManagerTarok *)MM_GCExtensionsBase::getExtensions(env)->globalAllocationManager;
+	MM_GlobalAllocationManagerTarok *allocationManager = (MM_GlobalAllocationManagerTarok *)MM_GCExtensionsBase::getExtensions(env->getOmrVM())->globalAllocationManager;
 	MM_RuntimeExecManager *runtimeExecManager = &allocationManager->_runtimeExecManager;
 	forkAndExecNativeFunctionV7 savedForkAndExecNative = (forkAndExecNativeFunctionV7)runtimeExecManager->_savedForkAndExecNative;
 	MM_AllocationContextTarok *allocationContext = (MM_AllocationContextTarok *)env->getAllocationContext();

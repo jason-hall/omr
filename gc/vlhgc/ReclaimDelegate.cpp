@@ -37,7 +37,7 @@
 #include "ReclaimDelegate.hpp"
 
 #include "AllocationContextTarok.hpp"
-#include "ClassLoaderManager.hpp"
+// OMRTODO #include "ClassLoaderManager.hpp"
 #include "CollectionSetDelegate.hpp"
 #include "CompactGroupManager.hpp"
 #include "CompactGroupPersistentStats.hpp"
@@ -53,7 +53,7 @@
 #include "MemoryPoolBumpPointer.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "ParallelSweepSchemeVLHGC.hpp"
-#include "VMThreadListIterator.hpp"
+#include "OMRVMThreadListIterator.hpp"
 #include "WriteOnceCompactor.hpp"
 
 
@@ -78,8 +78,8 @@ MM_ReclaimDelegate::MM_ReclaimDelegate(MM_EnvironmentBase *env, MM_HeapRegionMan
 bool
 MM_ReclaimDelegate::initialize(MM_EnvironmentVLHGC *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	_dispatcher = extensions->dispatcher;
 	UDATA regionCount = extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
 
@@ -93,13 +93,13 @@ MM_ReclaimDelegate::initialize(MM_EnvironmentVLHGC *env)
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) */
 
 	if(extensions->tarokEnableScoreBasedAtomicCompact) {
-		_compactGroups = (MM_ReclaimDelegate_ScoreBaseCompactTable *)j9mem_allocate_memory(sizeof(MM_ReclaimDelegate_ScoreBaseCompactTable) * _compactGroupMaxCount, OMRMEM_CATEGORY_MM);
+		_compactGroups = (MM_ReclaimDelegate_ScoreBaseCompactTable *)omrmem_allocate_memory(sizeof(MM_ReclaimDelegate_ScoreBaseCompactTable) * _compactGroupMaxCount, OMRMEM_CATEGORY_MM);
 		if(NULL == _compactGroups) {
 			goto error_no_memory;
 		}
 	}
 
-	_regionsSortedByEmptinessArray = (MM_HeapRegionDescriptorVLHGC **)j9mem_allocate_memory(sizeof(MM_HeapRegionDescriptorVLHGC *) * regionCount, OMRMEM_CATEGORY_MM);
+	_regionsSortedByEmptinessArray = (MM_HeapRegionDescriptorVLHGC **)omrmem_allocate_memory(sizeof(MM_HeapRegionDescriptorVLHGC *) * regionCount, OMRMEM_CATEGORY_MM);
 	if (NULL == _regionsSortedByEmptinessArray) {
 		goto error_no_memory;
 	}
@@ -113,23 +113,25 @@ error_no_memory:
 void
 MM_ReclaimDelegate::tearDown(MM_EnvironmentVLHGC *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	_dispatcher = NULL;
 	
 	if (NULL != _sweepScheme) {
 		_sweepScheme->kill(env);
 		_sweepScheme = NULL;
 	}
+#if defined (OMR_GC_MODRON_COMPACTION)
 	if (NULL != _writeOnceCompactor) {
 		_writeOnceCompactor->kill(env);
 		_writeOnceCompactor = NULL;
 	}
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 	if (NULL != _compactGroups) {
-		j9mem_free_memory(_compactGroups);
+		omrmem_free_memory(_compactGroups);
 		_compactGroups = NULL;
 	}
 	if (NULL != _regionsSortedByEmptinessArray) {
-		j9mem_free_memory(_regionsSortedByEmptinessArray);
+		omrmem_free_memory(_regionsSortedByEmptinessArray);
 		_regionsSortedByEmptinessArray = NULL;
 	}
 }
@@ -147,8 +149,9 @@ MM_ReclaimDelegate::tagRegionsBeforeSweep(MM_EnvironmentVLHGC *env)
 UDATA
 MM_ReclaimDelegate::tagRegionsBeforeCompact(MM_EnvironmentVLHGC *env, UDATA *regionRequiringSweep)
 {
-	Trc_MM_ReclaimDelegate_tagRegionsBeforeCompact_Entry(env->getLanguageVMThread());
 	UDATA regionCount = 0;
+#if defined (OMR_GC_MODRON_COMPACTION)
+	Trc_MM_ReclaimDelegate_tagRegionsBeforeCompact_Entry(env->getLanguageVMThread());
 	UDATA skippedRegionCount = 0;
 	UDATA skippedRegionCountRequiringSweep = 0;
 	bool isPartialCollect = (MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION == env->_cycleState->_collectionType);
@@ -177,12 +180,15 @@ MM_ReclaimDelegate::tagRegionsBeforeCompact(MM_EnvironmentVLHGC *env, UDATA *reg
 
 	Trc_MM_ReclaimDelegate_tagRegionsBeforeCompact_Exit(env->getLanguageVMThread(), regionCount, skippedRegionCount);
 	*regionRequiringSweep = skippedRegionCountRequiringSweep;
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 	return regionCount;
 }
 
 UDATA
 MM_ReclaimDelegate::tagRegionsBeforeCompactWithWorkGoal(MM_EnvironmentVLHGC *env, bool isCopyForward, UDATA desiredWorkToDo, UDATA *skippedRegionCountRequiringSweep)
 {
+	UDATA regionCount = 0;
+#if defined (OMR_GC_MODRON_COMPACTION)
 	UDATA regionSize = _regionManager->getRegionSize();
 	UDATA expectedBytesToReclaimThroughCompaction = 0;
 	UDATA bytesToBeMoved = 0;
@@ -190,7 +196,6 @@ MM_ReclaimDelegate::tagRegionsBeforeCompactWithWorkGoal(MM_EnvironmentVLHGC *env
 	Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal_Entry(env->getLanguageVMThread(), desiredWorkToDo);
 	Assert_MM_true(MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION == env->_cycleState->_collectionType);
 	double lowestCompactScore = 100.0;
-	UDATA regionCount = 0;
 
 	deriveCompactScore(env);
 	
@@ -231,7 +236,7 @@ MM_ReclaimDelegate::tagRegionsBeforeCompactWithWorkGoal(MM_EnvironmentVLHGC *env
 			expectedBytesToReclaimThroughCompaction += freeMemory;
 			regionCount += 1;
 			UDATA regionIndex = _regionManager->mapDescriptorToRegionTableIndex(region);
-			Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal_addingToCompactSet(env->getLanguageVMThread(), regionIndex, compactGroup, region->getLogicalAge(), region->_compactData._compactScore, (100 * freeMemory)/regionSize, MM_GCExtensionsBase::getExtensions(env)->compactGroupPersistentStats[compactGroup]._weightedSurvivalRate);
+			Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal_addingToCompactSet(env->getLanguageVMThread(), regionIndex, compactGroup, region->getLogicalAge(), region->_compactData._compactScore, (100 * freeMemory)/regionSize, MM_GCExtensionsBase::getExtensions(env->getOmrVM())->compactGroupPersistentStats[compactGroup]._weightedSurvivalRate);
 
 			if (isCopyForward) {
 				region->_markData._shouldMark = true;
@@ -251,6 +256,7 @@ MM_ReclaimDelegate::tagRegionsBeforeCompactWithWorkGoal(MM_EnvironmentVLHGC *env
 	}
 
 	Trc_MM_ReclaimDelegate_tagRegionsBeforeCompactWithWorkGoal_Exit(env->getLanguageVMThread(), bytesToBeMoved, expectedBytesToReclaimThroughCompaction / regionSize);
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 	return regionCount;
 }
 
@@ -260,7 +266,7 @@ MM_ReclaimDelegate::estimateReclaimableRegions(MM_EnvironmentVLHGC *env, double 
 	Trc_MM_ReclaimDelegate_estimateReclaimableRegions_Entry(env->getLanguageVMThread());
 	
 	UDATA regionSize = _regionManager->getRegionSize();
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_GlobalAllocationManagerTarok *globalAllocationManager = (MM_GlobalAllocationManagerTarok *)extensions->globalAllocationManager;
 	UDATA freeRegions = globalAllocationManager->getFreeRegionCount();
 	
@@ -352,7 +358,7 @@ compareEmptinessFunc(const void *element1, const void *element2)
 void
 MM_ReclaimDelegate::rebuildRegionsSortedByEmptinessArray(MM_EnvironmentVLHGC *env)
 {
-	MM_GCExtensionsBase * extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase * extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
 
 	GC_HeapRegionIteratorVLHGC regionIterator(regionManager);
@@ -383,7 +389,7 @@ MM_ReclaimDelegate::rebuildRegionsSortedByEmptinessArray(MM_EnvironmentVLHGC *en
 double
 MM_ReclaimDelegate::calculateOptimalEmptinessRegionThreshold(MM_EnvironmentVLHGC *env, double regionConsumptionRate, double avgSurvivorRegions, double avgCopyForwardRate, U_64 scanTimeCostPerGMP)
 {
-	const MM_GCExtensionsBase * extensions = MM_GCExtensionsBase::getExtensions(env);
+	const MM_GCExtensionsBase * extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_GlobalAllocationManagerTarok * allocationmanager = (MM_GlobalAllocationManagerTarok *)extensions->globalAllocationManager;
 	const UDATA regionSize = _regionManager->getRegionSize();
 	const UDATA defragmentRecoveryTargetPerPGC = (UDATA) ceil(regionConsumptionRate * (double)regionSize);
@@ -497,21 +503,21 @@ MM_ReclaimDelegate::untagRegionsAfterSweep()
 void 
 MM_ReclaimDelegate::doSweep(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *activeSubSpace, MM_GCCode gcCode)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._sweepStats._startTime = j9time_hires_clock();
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._sweepStats._startTime = omrtime_hires_clock();
 	reportSweepStart(env);
 
 	_sweepScheme->sweepForMinimumSize(env, env->_cycleState->_activeSubSpace,  allocDescription);
 	_sweepScheme->completeSweep(env, COMPACTION_REQUIRED);
 
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._sweepStats._endTime = j9time_hires_clock();
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._sweepStats._endTime = omrtime_hires_clock();
 	reportSweepEnd(env);
 }
 
 void
 MM_ReclaimDelegate::performAtomicSweep(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *activeSubSpace, MM_GCCode gcCode)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_CompactGroupPersistentStats *persistentStats = extensions->compactGroupPersistentStats;
 
 	tagRegionsBeforeSweep(env);
@@ -541,6 +547,7 @@ MM_ReclaimDelegate::createRegionCollectionSetForPartialGC(MM_EnvironmentVLHGC *e
 void
 MM_ReclaimDelegate::deriveCompactScore(MM_EnvironmentVLHGC *env)
 {
+#if defined (OMR_GC_MODRON_COMPACTION)
 	Trc_MM_ReclaimDelegate_deriveCompactScore_Entry(env->getLanguageVMThread());
 
 	/* Set the size of the compact score sorted list to 0 */
@@ -600,7 +607,7 @@ MM_ReclaimDelegate::deriveCompactScore(MM_EnvironmentVLHGC *env)
 					 * potentialWastedWork = the fraction of the region which consists of objects likely to die soon.
 					 * Regions which low potentialWastedWork are better candidates for compaction.
 					 */
-					double weightedSurvivalRate = MM_GCExtensionsBase::getExtensions(env)->compactGroupPersistentStats[compactGroup]._weightedSurvivalRate;
+					double weightedSurvivalRate = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->compactGroupPersistentStats[compactGroup]._weightedSurvivalRate;
 					double potentialWastedWork = (1.0 - weightedSurvivalRate) * (1.0 - emptiness);
 					
 					if (env->_cycleState->_shouldRunCopyForward) {
@@ -667,12 +674,14 @@ MM_ReclaimDelegate::deriveCompactScore(MM_EnvironmentVLHGC *env)
 	
 	Assert_MM_true((contributingRegionCount + noncontributingRegionCount) == _currentSortedRegionCount);
 	Trc_MM_ReclaimDelegate_deriveCompactScore_Exit(env->getLanguageVMThread(), overflowedRegionCount, unsweptRegionCount, alreadySelectedRegionCount, fullRegionCount, jniCriticalReservedRegions, noncontributingRegionCount, contributingRegionCount, notDefragmentationTarget);
-	
+
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 }
 
 void
 MM_ReclaimDelegate::postCompactCleanup(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *activeSubSpace, MM_GCCode gcCode)
 {
+#if defined (OMR_GC_MODRON_COMPACTION)
 	/* Restart the allocation caches associated to all threads */
 	masterThreadRestartAllocationCaches(env);
 
@@ -707,12 +716,13 @@ MM_ReclaimDelegate::postCompactCleanup(MM_EnvironmentVLHGC *env, MM_AllocateDesc
 			zeroRememberedRegions); 
 
 	/* ----- end of cleanupAfterCollect ------*/
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 }
 
 void
 MM_ReclaimDelegate::runReclaimCompleteSweep(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *activeSubSpace, MM_GCCode gcCode)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_GlobalAllocationManagerTarok *globalAllocationManager = (MM_GlobalAllocationManagerTarok *)extensions->globalAllocationManager;
 	
 	Assert_MM_false(env->_cycleState->_shouldRunCopyForward);
@@ -727,7 +737,7 @@ MM_ReclaimDelegate::runReclaimCompleteSweep(MM_EnvironmentVLHGC *env, MM_Allocat
 void
 MM_ReclaimDelegate::runReclaimCompleteCompact(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *activeSubSpace, MM_GCCode gcCode, MM_MarkMap *nextMarkMap, UDATA compactSelectionGoalInBytes)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_GlobalAllocationManagerTarok *globalAllocationManager = (MM_GlobalAllocationManagerTarok *)extensions->globalAllocationManager;
 	
 	Assert_MM_false(env->_cycleState->_shouldRunCopyForward);
@@ -740,10 +750,10 @@ MM_ReclaimDelegate::runReclaimCompleteCompact(MM_EnvironmentVLHGC *env, MM_Alloc
 void
 MM_ReclaimDelegate::runReclaimForAbortedCopyForward(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *activeSubSpace, MM_GCCode gcCode, MM_MarkMap *nextMarkMap, UDATA *skippedRegionCountRequiringSweep)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_CompactGroupPersistentStats *persistentStats = extensions->compactGroupPersistentStats;
 
-	Trc_MM_ReclaimDelegate_runReclaimForAbortedCopyForward_Entry(env->getLanguageVMThread(), ((MM_GlobalAllocationManagerTarok *)MM_GCExtensionsBase::getExtensions(env)->globalAllocationManager)->getFreeRegionCount());
+	Trc_MM_ReclaimDelegate_runReclaimForAbortedCopyForward_Entry(env->getLanguageVMThread(), ((MM_GlobalAllocationManagerTarok *)MM_GCExtensionsBase::getExtensions(env->getOmrVM())->globalAllocationManager)->getFreeRegionCount());
 	Assert_MM_true(env->_cycleState->_shouldRunCopyForward);
 
 	UDATA regionsCompacted = tagRegionsBeforeCompact(env, skippedRegionCountRequiringSweep);
@@ -755,13 +765,13 @@ MM_ReclaimDelegate::runReclaimForAbortedCopyForward(MM_EnvironmentVLHGC *env, MM
 	/* general cleanup */
 	postCompactCleanup(env, allocDescription, activeSubSpace, gcCode);
 	
-	Trc_MM_ReclaimDelegate_runReclaimForAbortedCopyForward_Exit(env->getLanguageVMThread(), ((MM_GlobalAllocationManagerTarok *)MM_GCExtensionsBase::getExtensions(env)->globalAllocationManager)->getFreeRegionCount(), regionsCompacted);
+	Trc_MM_ReclaimDelegate_runReclaimForAbortedCopyForward_Exit(env->getLanguageVMThread(), ((MM_GlobalAllocationManagerTarok *)MM_GCExtensionsBase::getExtensions(env->getOmrVM())->globalAllocationManager)->getFreeRegionCount(), regionsCompacted);
 }
 
 void 
 MM_ReclaimDelegate::runCompact(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *activeSubSpace, UDATA compactSelectionGoalInBytes, MM_GCCode gcCode, MM_MarkMap *nextMarkMap, UDATA *skippedRegionCountRequiringSweep)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_CompactGroupPersistentStats *persistentStats = extensions->compactGroupPersistentStats;
 
 	Trc_MM_ReclaimDelegate_runCompact_Entry(env->getLanguageVMThread(), compactSelectionGoalInBytes);
@@ -831,10 +841,10 @@ MM_ReclaimDelegate::deleteSweepPoolState(MM_EnvironmentBase *env, void *sweepPoo
 void
 MM_ReclaimDelegate::masterThreadCompact(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MarkMap *nextMarkMap)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats._startTime = j9time_hires_clock();
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats._startTime = omrtime_hires_clock();
 	reportCompactStart(env);
 
 	extensions->interRegionRememberedSet->setupForPartialCollect(env);
@@ -842,7 +852,7 @@ MM_ReclaimDelegate::masterThreadCompact(MM_EnvironmentVLHGC *env, MM_AllocateDes
 	MM_ParallelWriteOnceCompactTask compactTask(env, _dispatcher, _writeOnceCompactor, env->_cycleState, nextMarkMap);
 	_dispatcher->run(env, &compactTask);
 
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats._endTime = j9time_hires_clock();
+	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats._endTime = omrtime_hires_clock();
 	reportCompactEnd(env);
 }
 #endif /* J9VM_GC_MODRON_COMPACTION */
@@ -850,10 +860,10 @@ MM_ReclaimDelegate::masterThreadCompact(MM_EnvironmentVLHGC *env, MM_AllocateDes
 void
 MM_ReclaimDelegate::masterThreadRestartAllocationCaches(MM_EnvironmentVLHGC *env)
 {
-	GC_VMThreadListIterator vmThreadListIterator((OMR_VM *)env->getLanguageVM());
+	GC_OMRVMThreadListIterator vmThreadListIterator(env->getOmrVM());
 	OMR_VMThread *walkThread;
-	while((walkThread = vmThreadListIterator.nextVMThread()) != NULL) {
-		MM_EnvironmentBase *walkEnv = MM_EnvironmentBase::getEnvironment(walkThread->omrVMThread);
+	while((walkThread = vmThreadListIterator.nextOMRVMThread()) != NULL) {
+		MM_EnvironmentBase *walkEnv = MM_EnvironmentBase::getEnvironment(walkThread);
 		/* CMVC 123281: setThreadScanned(false) is called here because the concurrent collector
 		 * uses this as the reset point for all threads scanned state. This should really be moved
 		 * into the STW thread scan phase.
@@ -868,45 +878,45 @@ void
 MM_ReclaimDelegate::reportSweepStart(MM_EnvironmentBase *env)
 {
 	OMR_VMThread *vmThread = (OMR_VMThread *)env->getLanguageVMThread();
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_SweepStart(vmThread);
 
 	TRIGGER_J9HOOK_MM_PRIVATE_SWEEP_START(
-		MM_GCExtensionsBase::getExtensions(env)->privateHookInterface,
+		MM_GCExtensionsBase::getExtensions(env->getOmrVM())->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_SWEEP_START);
 
-	TRIGGER_J9HOOK_MM_PRIVATE_RECLAIM_SWEEP_START(MM_GCExtensionsBase::getExtensions(env)->privateHookInterface, env->getOmrVMThread(), &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._sweepStats);
+	TRIGGER_J9HOOK_MM_PRIVATE_RECLAIM_SWEEP_START(MM_GCExtensionsBase::getExtensions(env->getOmrVM())->privateHookInterface, env->getOmrVMThread(), &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._sweepStats);
 }
 
 void
 MM_ReclaimDelegate::reportSweepEnd(MM_EnvironmentBase *env)
 {
 	OMR_VMThread *vmThread = (OMR_VMThread *)env->getLanguageVMThread();
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_SweepEnd(vmThread);
 
 	TRIGGER_J9HOOK_MM_PRIVATE_SWEEP_END(
-		MM_GCExtensionsBase::getExtensions(env)->privateHookInterface,
+		MM_GCExtensionsBase::getExtensions(env->getOmrVM())->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_SWEEP_END);
 
-	TRIGGER_J9HOOK_MM_PRIVATE_RECLAIM_SWEEP_END(MM_GCExtensionsBase::getExtensions(env)->privateHookInterface, env->getOmrVMThread(), &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._sweepStats);
+	TRIGGER_J9HOOK_MM_PRIVATE_RECLAIM_SWEEP_END(MM_GCExtensionsBase::getExtensions(env->getOmrVM())->privateHookInterface, env->getOmrVMThread(), &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._sweepStats);
 }
 
 void
 MM_ReclaimDelegate::reportGlobalGCCollectComplete(MM_EnvironmentBase *env)
 {
 	OMR_VMThread *vmThread = (OMR_VMThread *)env->getLanguageVMThread();
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_GlobalGCCollectComplete(vmThread);
 	
 	TRIGGER_J9HOOK_MM_PRIVATE_GLOBAL_GC_COLLECT_COMPLETE(
-		MM_GCExtensionsBase::getExtensions(env)->privateHookInterface,
+		MM_GCExtensionsBase::getExtensions(env->getOmrVM())->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_GLOBAL_GC_COLLECT_COMPLETE
 	);
 }
@@ -915,16 +925,16 @@ MM_ReclaimDelegate::reportGlobalGCCollectComplete(MM_EnvironmentBase *env)
 void
 MM_ReclaimDelegate::reportCompactStart(MM_EnvironmentBase *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	CompactReason compactReason = (CompactReason)(static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats._compactReason);
 	OMR_VMThread *vmThread = (OMR_VMThread *)env->getLanguageVMThread();
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	Trc_MM_CompactStart(vmThread, getCompactionReasonAsString(compactReason));
 
 	TRIGGER_J9HOOK_MM_PRIVATE_COMPACT_START(
 		extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_PRIVATE_COMPACT_START,
 		extensions->globalVLHGCStats.gcCount);
 
@@ -934,9 +944,9 @@ MM_ReclaimDelegate::reportCompactStart(MM_EnvironmentBase *env)
 void
 MM_ReclaimDelegate::reportCompactEnd(MM_EnvironmentBase *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	OMR_VMThread *vmThread = (OMR_VMThread *)env->getLanguageVMThread();
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_CompactVLHGCStats *stats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._compactStats;
 
 	Trc_MM_CompactEnd(vmThread, stats->_movedBytes);
@@ -944,7 +954,7 @@ MM_ReclaimDelegate::reportCompactEnd(MM_EnvironmentBase *env)
 	TRIGGER_J9HOOK_MM_OMR_COMPACT_END(
 		extensions->omrHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock(),
+		omrtime_hires_clock(),
 		J9HOOK_MM_OMR_COMPACT_END);
 
 	TRIGGER_J9HOOK_MM_PRIVATE_RECLAIM_COMPACT_END(

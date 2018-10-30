@@ -57,7 +57,7 @@ protected:
 	OMR_VM *_omrVM;
 
 public:
-	MMINLINE void initialize(fomrobject_t *objectPtr)
+	MMINLINE void initialize(omrobjectptr_t objectPtr)
 	{
 		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 
@@ -94,7 +94,7 @@ public:
 	/**
 	 * @param objectPtr the array object to be processed
 	 */
-	GC_PointerContiguousArrayIterator(OMR_VM *omrVM, fomrobject_t *objectPtr)
+	GC_PointerContiguousArrayIterator(OMR_VM *omrVM, omrobjectptr_t objectPtr)
 		: _slotObject(GC_SlotObject(omrVM, NULL))
 		, _omrVM(omrVM)
 	{

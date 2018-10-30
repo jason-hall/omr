@@ -26,6 +26,7 @@
 
 #include "EnvironmentVLHGC.hpp"
 #include "GCExtensionsBase.hpp"
+#include "Heap.hpp"
 #include "HeapRegionManager.hpp"
 #include "InterRegionRememberedSet.hpp"
 #include "RememberedSetCardBucket.hpp"
@@ -49,8 +50,8 @@ MM_EnvironmentVLHGC::MM_EnvironmentVLHGC(OMR_VMThread *omrVMThread)
 /**
  * Create an Environment object.
  */
-MM_EnvironmentVLHGC::MM_EnvironmentVLHGC(OMR_VM *javaVM)
-	: MM_EnvironmentBase(javaVM->omrVM)
+MM_EnvironmentVLHGC::MM_EnvironmentVLHGC(OMR_VM *omrVM)
+	: MM_EnvironmentBase(omrVM)
 	,_survivorCopyScanCache(NULL)
 	,_scanCache(NULL)
 	,_deferredScanCache(NULL)
@@ -99,7 +100,7 @@ void
 MM_EnvironmentVLHGC::initializeGCThread()
 {
 	Assert_MM_true(NULL == _rememberedSetCardBucketPool);
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(this);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(this->getOmrVM());
 	UDATA threadPoolSize = extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
 	/* Make this thread aware of its RSCL buckets for all regions */
 	_rememberedSetCardBucketPool = &extensions->rememberedSetCardBucketPool[getSlaveID() * threadPoolSize];

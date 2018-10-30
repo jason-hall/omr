@@ -23,7 +23,6 @@
 
 
 #include "omr.h"
-#include ""
 #include "omrport.h"
 #include "omrthread.h"
 

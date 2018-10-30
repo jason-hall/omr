@@ -26,8 +26,9 @@
 #include "omr.h"
 #include "omrcfg.h"
 #include "omrgcconsts.h"
-#include "j2sever.h"
+//#include "j2sever.h"
 #include "ModronAssertions.h"
+#include "objectdescription.h"
 
 #include <string.h>
 // OMRTODO #include "ClassIterator.hpp"
@@ -62,18 +63,18 @@
 #include "PartialMarkingScheme.hpp"
 #include "MemorySubSpaceRegionIterator.hpp"
 #include "ModronTypes.hpp"
-#include "ObjectAccessBarrier.hpp"
+// OMRTODO #include "ObjectAccessBarrier.hpp"
 #include "ObjectModel.hpp"
 #include "PacketSlotIterator.hpp"
 #include "ParallelTask.hpp"
 #include "PartialMarkGMPCardCleaner.hpp"
 #include "PartialMarkNoGMPCardCleaner.hpp"
 #include "PointerArrayIterator.hpp"
-#include "ReferenceObjectList.hpp"
+// OMRTODO #include "ReferenceObjectList.hpp"
 #include "ReferenceStats.hpp"
 #include "RegionBasedOverflowVLHGC.hpp"
 #include "RootScanner.hpp"
-#include "SegmentIterator.hpp"
+// OMRTODO #include "SegmentIterator.hpp"
 #include "StackSlotValidator.hpp"
 #include "SublistIterator.hpp"
 #include "SublistPool.hpp"
@@ -434,7 +435,7 @@ MM_PartialMarkingScheme::rememberReferenceIfRequired(MM_EnvironmentVLHGC *env, f
 MMINLINE void
 MM_PartialMarkingScheme::markObjectClass(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr)
 {
-#if 0 OMRTODO
+#if 0 // OMRTODO
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	_extensions->classLoaderRememberedSet->rememberInstance(env, objectPtr);
 	if(isDynamicClassUnloadingEnabled()) {
@@ -568,7 +569,7 @@ MM_PartialMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, fomr
 	bool referentMustBeMarked = isReferenceCleared || !isReferenceInCollectionSet;
 	bool referentMustBeCleared = false;
 	UDATA referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
-#if 0 OMRTODO
+#if 0 // OMRTODO
 	UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9_JAVA_CLASS_REFERENCE_MASK;
 	switch (referenceObjectType) {
 	case J9_JAVA_CLASS_REFERENCE_WEAK:
@@ -736,7 +737,7 @@ MM_PartialMarkingScheme::scanPointerArrayObject(MM_EnvironmentVLHGC *env, fomrob
 	}
 }
 
-#if 0 OMRTODO
+#if 0 // OMRTODO
 void 
 MM_PartialMarkingScheme::scanClassObject(MM_EnvironmentVLHGC *env, fomrobject_t *classObject, ScanReason reason)
 {
@@ -887,7 +888,7 @@ MM_PartialMarkingScheme::scanObject(MM_EnvironmentVLHGC *env, fomrobject_t *obje
 			scanMixedObject(env, objectPtr, reason);
 			break;
 
-#if 0 OMRTODO
+#if 0 // OMRTODO
 		case GC_ObjectModel::SCAN_CLASS_OBJECT:
 			scanClassObject(env, objectPtr, reason);
 			break;
@@ -1029,7 +1030,7 @@ private:
 		}
 	}
 
-#if 0 OMRTODO
+#if 0 // OMRTODO
 	virtual void doClass(J9Class *clazz) {
 		/* we only discover classes through their loaders or other references */
 		Assert_MM_unreachable();
@@ -1056,7 +1057,7 @@ public:
 	void 
 	scanRoots(MM_EnvironmentBase *env)
 	{
-#if 0 OMRTODO
+#if 0 // OMRTODO
 		if (_classDataAsRoots) {
 			/* The classLoaderObject of a class loader might be in the nursery, but a class loader
 			 * can never be in the remembered set, so include class loaders here.
@@ -1101,7 +1102,7 @@ private:
 		assume0(0);  /* Should not have gotten here - how do you clear a generic slot? */
 	}
 
-#if 0 OMRTODO
+#if 0 // OMRTODO
 	virtual void doClass(J9Class *clazz) {
 		assume0(0);  /* Should not have gotten here - how do you clear a class? */
 	}
@@ -1276,7 +1277,7 @@ MM_PartialMarkingScheme::initializeForPartialCollect(MM_EnvironmentVLHGC *env)
 {
 	Assert_MM_true(MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION == env->_cycleState->_collectionType);
 
-#if 0 OMRTODO
+#if 0 // OMRTODO
 	/* one thread clears the class loader remembered set */
 	if (_extensions->tarokEnableIncrementalClassGC) {
 		if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
@@ -1406,7 +1407,7 @@ MM_PartialMarkingScheme::markLiveObjectsRoots(MM_EnvironmentVLHGC *env)
 	// OMRTODO rootScanner.setClassDataAsRoots(!isDynamicClassUnloadingEnabled());
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-#if 0 OMRTODO
+#if 0 // OMRTODO
 	/* Mark root set classes */
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	if(isDynamicClassUnloadingEnabled()) {
@@ -1728,7 +1729,7 @@ MM_PartialMarkingScheme::scanPhantomReferenceObjects(MM_EnvironmentVLHGC *env)
 void
 MM_PartialMarkingScheme::processReferenceList(MM_EnvironmentVLHGC *env, fomrobject_t* headOfList, MM_ReferenceStats *referenceStats)
 {
-#if 0 OMRTODO any of this not java specific? look at it
+#if 0 // OMRTODO any of this not java specific? look at it
 	/* no list can possibly contain more reference objects than there are bytes in a region. */
 	const UDATA maxObjects = _heapRegionManager->getRegionSize();
 	UDATA objectsVisited = 0;

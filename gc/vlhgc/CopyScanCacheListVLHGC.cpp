@@ -46,7 +46,7 @@ MM_CopyScanCacheListVLHGC::MM_CopyScanCacheListVLHGC()
 bool
 MM_CopyScanCacheListVLHGC::initialize(MM_EnvironmentVLHGC *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	_sublistCount = extensions->packetListSplit;
 	Assert_MM_true(0 < _sublistCount);
 	
@@ -103,7 +103,7 @@ MM_CopyScanCacheListVLHGC::appendCacheEntries(MM_EnvironmentVLHGC *env, UDATA ca
 bool
 MM_CopyScanCacheListVLHGC::resizeCacheEntries(MM_EnvironmentVLHGC *env, UDATA totalCacheEntryCount)
 {
-	MM_GCExtensionsBase *ext = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *ext = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	
 	/* If -Xgc:fvtest=scanCacheCountn has been specified, then restrict the number of scan caches to n.
 	 * Stop all future resizes from having any effect. */

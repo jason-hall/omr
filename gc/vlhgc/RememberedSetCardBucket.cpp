@@ -54,7 +54,7 @@ MM_RememberedSetCardBucket::setListAsOverflow(MM_EnvironmentVLHGC *env, MM_Remem
 	if (FALSE == oldValue) {
 		/* the thread that sets the overflow flag first puts it on the global list of overflowed regions
 		  so that buffers can be released by other threads */
-		MM_GCExtensionsBase::getExtensions(env)->interRegionRememberedSet->enqueueOverflowedRscl(env, listToOverflow);
+		MM_GCExtensionsBase::getExtensions(env->getOmrVM())->interRegionRememberedSet->enqueueOverflowedRscl(env, listToOverflow);
 	}
 
 	listToOverflow->releaseBuffersForCurrentThread(env);
@@ -72,13 +72,13 @@ MM_RememberedSetCardBucket::addToNewBuffer(MM_EnvironmentVLHGC *env, MM_Remember
 		 */
 		MM_AtomicOperations::add(&_rscl->_bufferCount, 1);
 		_bufferCount += 1;
-		if ((_rscl->_bufferCount * MAX_BUFFER_SIZE) >  MM_GCExtensionsBase::getExtensions(env)->tarokRememberedSetCardListMaxSize) {
+		if ((_rscl->_bufferCount * MAX_BUFFER_SIZE) >  MM_GCExtensionsBase::getExtensions(env->getOmrVM())->tarokRememberedSetCardListMaxSize) {
 			MM_AtomicOperations::subtract(&_rscl->_bufferCount, 1);
 			_bufferCount -= 1;
 
 			setListAsOverflow(env, _rscl);
 		} else {
-			MM_InterRegionRememberedSet *interRegionRememberedSet = MM_GCExtensionsBase::getExtensions(env)->interRegionRememberedSet;
+			MM_InterRegionRememberedSet *interRegionRememberedSet = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->interRegionRememberedSet;
 
 			MM_CardBufferControlBlock *newBuffer = interRegionRememberedSet->allocateCardBufferControlBlockFromLocalPool(env);
 			if (NULL == newBuffer) {
@@ -156,7 +156,7 @@ MM_RememberedSetCardBucket::releaseBuffers(MM_EnvironmentVLHGC *env, UDATA buffe
 {
 	Assert_MM_true(_rscl->_bufferCount >= _bufferCount);
 
-	UDATA releasedCount = MM_GCExtensionsBase::getExtensions(env)->interRegionRememberedSet->releaseCardBufferControlBlockListToLocalPool(env, _cardBufferControlBlockHead, buffersToLocalPoolCount);
+	UDATA releasedCount = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->interRegionRememberedSet->releaseCardBufferControlBlockListToLocalPool(env, _cardBufferControlBlockHead, buffersToLocalPoolCount);
 	Assert_MM_true(_bufferCount == releasedCount);
 
 	_cardBufferControlBlockHead = NULL;
@@ -253,7 +253,7 @@ MM_RememberedSetCardBucket::compact(MM_EnvironmentVLHGC *env)
 			toCardBufferControlBlock->_next = NULL;
 		}
 
-		UDATA releasedCount = MM_GCExtensionsBase::getExtensions(env)->interRegionRememberedSet->releaseCardBufferControlBlockListToLocalPool(env, toDeleteCardBufferControlBlock, UDATA_MAX);
+		UDATA releasedCount = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->interRegionRememberedSet->releaseCardBufferControlBlockListToLocalPool(env, toDeleteCardBufferControlBlock, UDATA_MAX);
 		Assert_MM_true(releasedCount <= _bufferCount);
 		_bufferCount -= releasedCount;
 		_rscl->_bufferCount -= releasedCount;

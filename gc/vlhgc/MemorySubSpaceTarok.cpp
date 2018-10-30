@@ -490,7 +490,7 @@ MM_MemorySubSpaceTarok::newInstance(MM_EnvironmentBase *env, MM_PhysicalSubArena
 	
 	memorySubSpace = (MM_MemorySubSpaceTarok *)env->getForge()->allocate(sizeof(MM_MemorySubSpaceTarok), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (NULL != memorySubSpace) {
-		MM_HeapRegionManager *heapRegionManager = MM_GCExtensionsBase::getExtensions(env)->heapRegionManager;
+		MM_HeapRegionManager *heapRegionManager = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->heapRegionManager;
 		new(memorySubSpace) MM_MemorySubSpaceTarok(env, physicalSubArena, gamt, heapRegionManager, usesGlobalCollector, minimumSize, initialSize, maximumSize, memoryType, objectFlags);
 		if (!memorySubSpace->initialize(env)) {
 			memorySubSpace->kill(env);
@@ -507,7 +507,7 @@ MM_MemorySubSpaceTarok::initialize(MM_EnvironmentBase *env)
 		return false;
 	}
 	
-	if (!_expandLock.initialize(env, &MM_GCExtensionsBase::getExtensions(env)->lnrlOptions, "MM_MemorySubSpaceTarok:_expandLock")) {
+	if (!_expandLock.initialize(env, &MM_GCExtensionsBase::getExtensions(env->getOmrVM())->lnrlOptions, "MM_MemorySubSpaceTarok:_expandLock")) {
 		return false;
 	}
 
@@ -554,7 +554,7 @@ MM_MemorySubSpaceTarok::expanded(
 
 	if (result) {
 		/* Expand the valid range for arraylets. */
-		MM_GCExtensionsBase::getExtensions(_extensions)->indexableObjectModel.expandArrayletSubSpaceRange(this, regionLowAddress, regionHighAddress, largestDesirableArraySpine());
+		MM_GCExtensionsBase::getExtensions(_extensions->getOmrVM())->indexableObjectModel.expandArrayletSubSpaceRange(this, regionLowAddress, regionHighAddress, largestDesirableArraySpine());
 
 		/* this region should be reserved when we first expand into it */
 		Assert_MM_true(MM_HeapRegionDescriptor::RESERVED == region->getRegionType());
@@ -696,7 +696,7 @@ MM_MemorySubSpaceTarok::replenishAllocationContextFailed(MM_EnvironmentBase *env
 	Assert_MM_true(this == replenishingSpace);
 
 	/* we currently have no design for handling AC replenishment in a multi-subspace world, so reach for the collector */
-	MM_IncrementalGenerationalGC *collector = (MM_IncrementalGenerationalGC*)MM_GCExtensionsBase::getExtensions(env)->getGlobalCollector();
+	MM_IncrementalGenerationalGC *collector = (MM_IncrementalGenerationalGC*)MM_GCExtensionsBase::getExtensions(env->getOmrVM())->getGlobalCollector();
 	Assert_MM_true(NULL != collector);
 
 	allocateDescription->saveObjects(env);
@@ -886,7 +886,7 @@ MM_MemorySubSpaceTarok::collectorExpand(MM_EnvironmentBase *env)
 	Assert_MM_true((0 == expansionAmount) || (expandSize == expansionAmount));
 
 	/* Inform the requesting collector that an expand attempt took place (even if the expansion failed) */
-	MM_IncrementalGenerationalGC *collector = (MM_IncrementalGenerationalGC*)MM_GCExtensionsBase::getExtensions(env)->getGlobalCollector();
+	MM_IncrementalGenerationalGC *collector = (MM_IncrementalGenerationalGC*)MM_GCExtensionsBase::getExtensions(env->getOmrVM())->getGlobalCollector();
 	Assert_MM_true(NULL != collector);
 	collector->collectorExpanded(env, this, expansionAmount);
 
@@ -907,7 +907,7 @@ IDATA
 MM_MemorySubSpaceTarok::performResize(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription)
 {
 	UDATA oldVMState = env->pushVMstate(J9VMSTATE_GC_PERFORM_RESIZE);
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	/* If -Xgc:fvtest=forceTenureResize is specified, then repeat a sequence of 5 expands followed by 5 contracts */	
 	if (extensions->fvtest_forceOldResize) {
 		UDATA resizeAmount = 0;
@@ -1127,7 +1127,7 @@ MM_MemorySubSpaceTarok::timeForHeapContract(MM_EnvironmentBase *env, MM_Allocate
 		}
 	}
 
-	MM_Heap * heap = MM_GCExtensionsBase::getExtensions(_extensions)->getHeap();
+	MM_Heap * heap = MM_GCExtensionsBase::getExtensions(_extensions->getOmrVM())->getHeap();
 	UDATA actualSoftMx = heap->getActualSoftMxSize(env);
 
 	if(0 != actualSoftMx) {
@@ -1522,13 +1522,13 @@ MM_MemorySubSpaceTarok::adjustExpansionWithinSoftMax(MM_EnvironmentBase *env, UD
 	MM_Heap * heap = env->getExtensions()->getHeap();
 	UDATA actualSoftMx = heap->getActualSoftMxSize(env);
 	UDATA activeMemorySize = getActiveMemorySize();
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	
 	if (0 != actualSoftMx) {
 		if ((minimumBytesRequired != 0) && ((activeMemorySize + minimumBytesRequired) > actualSoftMx)) {
-			if (J9_EVENT_IS_HOOKED(MM_GCExtensionsBase::getExtensions(env)->omrHookInterface, J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX)){
-				ALWAYS_TRIGGER_J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX(MM_GCExtensionsBase::getExtensions(env)->omrHookInterface, env->getOmrVMThread(),
-						j9time_hires_clock(), heap->getMaximumMemorySize(), heap->getActiveMemorySize(), MM_GCExtensionsBase::getExtensions(env)->softMx, minimumBytesRequired);
+			if (J9_EVENT_IS_HOOKED(MM_GCExtensionsBase::getExtensions(env->getOmrVM())->omrHookInterface, J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX)){
+				ALWAYS_TRIGGER_J9HOOK_MM_OMR_OOM_DUE_TO_SOFTMX(MM_GCExtensionsBase::getExtensions(env->getOmrVM())->omrHookInterface, env->getOmrVMThread(),
+						omrtime_hires_clock(), heap->getMaximumMemorySize(), heap->getActiveMemorySize(), MM_GCExtensionsBase::getExtensions(env->getOmrVM())->softMx, minimumBytesRequired);
 				actualSoftMx = heap->getActualSoftMxSize(env);
 			}
 		}

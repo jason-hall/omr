@@ -63,7 +63,7 @@ const double bytesScannedConcurrentlyPerGMPHistoricWeight = 0.50;
 
 MM_SchedulingDelegate::MM_SchedulingDelegate (MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager)
 	: MM_BaseNonVirtual()
-	, _extensions(MM_GCExtensionsBase::getExtensions(env))
+	, _extensions(MM_GCExtensionsBase::getExtensions(env->getOmrVM()))
 	, _regionManager(manager)
 	, _taxationIndex(0)
 	, _remainingGMPIntermissionIntervals(0)
@@ -156,7 +156,7 @@ MM_SchedulingDelegate::globalMarkIncrementCompleted(MM_EnvironmentVLHGC *env)
 void 
 MM_SchedulingDelegate::globalGarbageCollectCompleted(MM_EnvironmentVLHGC *env, UDATA reclaimableRegions, UDATA defragmentReclaimableRegions)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	/* Re-estimate the reclaimable region set but don't measure region consumption, since this wasn't a PGC */
 	_previousReclaimableRegions = reclaimableRegions;
@@ -176,7 +176,7 @@ MM_SchedulingDelegate::globalGarbageCollectCompleted(MM_EnvironmentVLHGC *env, U
 	TRIGGER_J9HOOK_MM_PRIVATE_VLHGC_GARBAGE_COLLECT_COMPLETED(
 		_extensions->privateHookInterface,
 		env->getOmrVMThread(),
-		j9time_hires_clock()
+		omrtime_hires_clock()
 	);
 }
 
@@ -185,10 +185,10 @@ MM_SchedulingDelegate::partialGarbageCollectStarted(MM_EnvironmentVLHGC *env)
 {
 	Assert_MM_true(0 == _partialGcStartTime);
 
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	/* Record the GC start time in order to track Partial GC times (and averages) over the course of the application lifetime */
-	_partialGcStartTime = j9time_hires_clock();
+	_partialGcStartTime = omrtime_hires_clock();
 }
 
 void
@@ -243,7 +243,7 @@ void
 MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, UDATA reclaimableRegions, UDATA defragmentReclaimableRegions)
 {
 	Trc_MM_SchedulingDelegate_partialGarbageCollectCompleted_Entry(env->getLanguageVMThread(), reclaimableRegions, defragmentReclaimableRegions);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_CopyForwardStats *copyForwardStats = &static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats;
 	
 	_globalSweepRequired = false;
@@ -291,8 +291,8 @@ MM_SchedulingDelegate::partialGarbageCollectCompleted(MM_EnvironmentVLHGC *env, 
 	estimateMacroDefragmentationWork(env);
 	
 	/* Calculate the time spent in the current Partial GC */
-	U_64 partialGcEndTime = j9time_hires_clock();
-	U_64 pgcTime = j9time_hires_delta(_partialGcStartTime, partialGcEndTime, J9PORT_TIME_DELTA_IN_MILLISECONDS);
+	U_64 partialGcEndTime = omrtime_hires_clock();
+	U_64 pgcTime = omrtime_hires_delta(_partialGcStartTime, partialGcEndTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS);
 	/* Clear the start time to be clear that we've used it */
 	_partialGcStartTime = 0;
 	calculateGlobalMarkIncrementTimeMillis(env, pgcTime);
@@ -420,11 +420,11 @@ MM_SchedulingDelegate::measureScanRate(MM_EnvironmentVLHGC *env, double historic
 	UDATA currentBytesScanned = markStats->_bytesScanned + markStats->_bytesCardClean;
 
 	if (0 != currentBytesScanned) {
-		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 		UDATA historicalBytesScanned = _scanRateStats.historicalBytesScanned;
 		U_64 historicalScanMicroseconds = _scanRateStats.historicalScanMicroseconds;
 		/* NOTE: scan time is the total time all threads spent scanning */
-		U_64 currentScanMicroseconds = j9time_hires_delta(0, markStats->getScanTime(), J9PORT_TIME_DELTA_IN_MICROSECONDS);
+		U_64 currentScanMicroseconds = omrtime_hires_delta(0, markStats->getScanTime(), OMRPORT_TIME_DELTA_IN_MICROSECONDS);
 
 		if (0 != historicalBytesScanned) {
 			/* Keep a historical count of bytes scanned and scan times and re-derive microsecondsperBytes every time we receive new data */
@@ -494,9 +494,9 @@ MM_SchedulingDelegate::updateLiveBytesAfterPartialCollect()
 			_liveSetBytesAfterPartialCollect -= memoryPool->getActualFreeMemorySize();
 			_liveSetBytesAfterPartialCollect -= memoryPool->getDarkMatterBytes();
 		} else if (region->isArrayletLeaf()) {
-			if (_extensions->objectModel.isObjectArray(region->_allocateData.getSpine())) {
+			/* OMRTODO getSpine()? if (_extensions->objectModel.isObjectArray(region->_allocateData.getSpine())) {
 				_liveSetBytesAfterPartialCollect += region->getSize();
-			}
+			}*/
 		} 
 	}
 }
@@ -598,7 +598,7 @@ MM_SchedulingDelegate::estimatePartialGCsRemaining(MM_EnvironmentVLHGC *env) con
 
 			/* Calculate the number of regions that we need for copy forward destination */
 			double survivorRegions = _averageSurvivorSetRegionCount;
-			Trc_MM_SchedulingDelegate_estimatePartialGCsRemaining_survivorNeeds(env->getLanguageVMThread(), (UDATA)_averageSurvivorSetRegionCount, MM_GCExtensionsBase::getExtensions(env)->tarokKickoffHeadroomInBytes, (UDATA)survivorRegions);
+			Trc_MM_SchedulingDelegate_estimatePartialGCsRemaining_survivorNeeds(env->getLanguageVMThread(), (UDATA)_averageSurvivorSetRegionCount, MM_GCExtensionsBase::getExtensions(env->getOmrVM())->tarokKickoffHeadroomInBytes, (UDATA)survivorRegions);
 
 			double freeRegions = (double)((MM_GlobalAllocationManagerTarok *)_extensions->globalAllocationManager)->getFreeRegionCount();
 
@@ -692,7 +692,7 @@ MM_SchedulingDelegate::getAverageEmptinessOfCopyForwardedRegions()
 double
 MM_SchedulingDelegate::getDefragmentEmptinessThreshold(MM_EnvironmentVLHGC *env)
 {
-	MM_GCExtensionsBase * extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase * extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	double averageEmptinessofCopyForwardedRegions = getAverageEmptinessOfCopyForwardedRegions();
 	double defragmentEmptinessThreshold = 0.0;
 
@@ -796,7 +796,7 @@ MM_SchedulingDelegate::calculatePGCCompactionRate(MM_EnvironmentVLHGC *env, UDAT
 					freeMemoryInCollectibleRegions += freeMemory;
 					/* see ReclaimDelegate::deriveCompactScore() for an explanation of potentialWastedWork */
 					UDATA compactGroup = MM_CompactGroupManager::getCompactGroupNumber(env, region);
-					double weightedSurvivalRate = MM_GCExtensionsBase::getExtensions(env)->compactGroupPersistentStats[compactGroup]._weightedSurvivalRate;
+					double weightedSurvivalRate = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->compactGroupPersistentStats[compactGroup]._weightedSurvivalRate;
 					double potentialWastedWork = (1.0 - weightedSurvivalRate) * (1.0 - emptiness);
 
 					/* the probability that we'll recover the free memory is determined by the potential gainful work, so use that determine how much memory we're likely to actually compact */
@@ -912,11 +912,11 @@ MM_SchedulingDelegate::copyForwardCompleted(MM_EnvironmentVLHGC *env)
 double
 MM_SchedulingDelegate::calculateAverageCopyForwardRate(MM_EnvironmentVLHGC *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	MM_CopyForwardStats * copyForwardStats = &(static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats);
 	UDATA bytesCopied = copyForwardStats->_copyBytesTotal;
 	U_64 timeSpentReferenceClearing = static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._irrsStats._clearFromRegionReferencesTimesus;
-	U_64 timeSpentInCopyForward = j9time_hires_delta(copyForwardStats->_startTime, copyForwardStats->_endTime, J9PORT_TIME_DELTA_IN_MICROSECONDS);
+	U_64 timeSpentInCopyForward = omrtime_hires_delta(copyForwardStats->_startTime, copyForwardStats->_endTime, OMRPORT_TIME_DELTA_IN_MICROSECONDS);
 
 	double copyForwardRate = 0.0;
 	if (timeSpentInCopyForward > timeSpentReferenceClearing) {
@@ -1134,7 +1134,7 @@ MM_SchedulingDelegate::estimateRemainingTimeMillisToScan() const
 void
 MM_SchedulingDelegate::updateGMPStats(MM_EnvironmentVLHGC *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	/* We should have just finished the last GMP increment, so persistentGlobalMarkPhaseState should contain
 	 * information for the whole GMP cycle.
@@ -1147,7 +1147,7 @@ MM_SchedulingDelegate::updateGMPStats(MM_EnvironmentVLHGC *env)
 	MM_MarkVLHGCStats * incrementalMarkStats = &(persistentGMPState->_vlhgcCycleStats._incrementalMarkStats);
 	MM_MarkVLHGCStats * concurrentMarkStats = &(persistentGMPState->_vlhgcCycleStats._concurrentMarkStats);
 
-	U_64 incrementalScanTime = (U_64) (((double) j9time_hires_delta(0, incrementalMarkStats->getScanTime(), J9PORT_TIME_DELTA_IN_MICROSECONDS)) / ((double) _extensions->gcThreadCount));
+	U_64 incrementalScanTime = (U_64) (((double) omrtime_hires_delta(0, incrementalMarkStats->getScanTime(), OMRPORT_TIME_DELTA_IN_MICROSECONDS)) / ((double) _extensions->gcThreadCount));
 	UDATA concurrentBytesScanned = concurrentMarkStats->_bytesScanned;
 
 	_historicTotalIncrementalScanTimePerGMP = (U_64) ((_historicTotalIncrementalScanTimePerGMP * incrementalScanTimePerGMPHistoricWeight) + (incrementalScanTime * (1 - incrementalScanTimePerGMPHistoricWeight)));
@@ -1159,7 +1159,7 @@ MM_SchedulingDelegate::updateGMPStats(MM_EnvironmentVLHGC *env)
 U_64
 MM_SchedulingDelegate::getScanTimeCostPerGMP(MM_EnvironmentVLHGC *env)
 {
-	MM_GCExtensionsBase * extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase * extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	double incrementalCost = (double)_historicTotalIncrementalScanTimePerGMP;
 	double concurrentCost = 0.0;
 	double scanRate = _scanRateStats.microSecondsPerByteScanned / (double)extensions->gcThreadCount;
