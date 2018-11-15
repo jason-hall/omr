@@ -52,10 +52,11 @@ MM_WriteOnceFixupCardCleaner::MM_WriteOnceFixupCardCleaner(MM_WriteOnceCompactor
 void
 MM_WriteOnceFixupCardCleaner::clean(MM_EnvironmentBase *envModron, void *lowAddress, void *highAddress, Card *cardToClean)
 {
-	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envModron);
 	Card fromState = *cardToClean;
 	Card toState = CARD_INVALID;
+#if defined (OMR_GC_MODRON_COMPACTION)
 	bool rememberedOnly = false;	
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 	switch(fromState) {
 	case CARD_DIRTY:
 		if (_isGlobalMarkPhaseRunning) {
@@ -66,7 +67,9 @@ MM_WriteOnceFixupCardCleaner::clean(MM_EnvironmentBase *envModron, void *lowAddr
 		break;
 	case CARD_MARK_COMPACT_TRANSITION:
 		/* presently, this state needs to be treated much the same was as PGC_MUST_SCAN but we know that any objects under the card which point to other regions have been rememebered */
+#if defined (OMR_GC_MODRON_COMPACTION)
 		rememberedOnly = true;
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 	case CARD_PGC_MUST_SCAN:
 		if (_isGlobalMarkPhaseRunning) {
 			/* This transition seems incorrect but is absolutely essential so some explanation will be provided:
@@ -86,12 +89,16 @@ MM_WriteOnceFixupCardCleaner::clean(MM_EnvironmentBase *envModron, void *lowAddr
 		}
 		break;
 	case CARD_REMEMBERED_AND_GMP_SCAN:
-		Assert_MM_true(_isGlobalMarkPhaseRunning);	
+		Assert_MM_true(_isGlobalMarkPhaseRunning);
+#if defined (OMR_GC_MODRON_COMPACTION)
 		rememberedOnly = true;
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 		toState = CARD_GMP_MUST_SCAN;
 		break;
 	case CARD_REMEMBERED:
+#if defined (OMR_GC_MODRON_COMPACTION)
 		rememberedOnly = true;
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 		toState = CARD_CLEAN;
 		break;		
 	case CARD_GMP_MUST_SCAN:
@@ -107,10 +114,12 @@ MM_WriteOnceFixupCardCleaner::clean(MM_EnvironmentBase *envModron, void *lowAddr
 	if (CARD_INVALID != toState) {
 		*cardToClean = toState;
 
+#if defined (OMR_GC_MODRON_COMPACTION)
+		MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envModron);
 		/* we should not be cleaning cards in compact regions -- those objects get fixed up differently */
 		Assert_MM_false(((MM_HeapRegionDescriptorVLHGC *)_regionManager->tableDescriptorForAddress(lowAddress))->_compactData._shouldCompact);
 
 		_compactScheme->fixupObjectsInRange(env, lowAddress, highAddress, rememberedOnly);
-
+#endif /* defined (OMR_GC_MODRON_COMPACTION) */
 	}
 }

@@ -28,6 +28,7 @@
 
 #include "Dispatcher.hpp"
 #include "EnvironmentBase.hpp"
+#include "Heap.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionManager.hpp"

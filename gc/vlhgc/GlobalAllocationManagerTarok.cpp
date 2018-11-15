@@ -32,7 +32,7 @@
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionManager.hpp"
 #include "IncrementalGenerationalGC.hpp"
-#include "VMThreadListIterator.hpp"
+#include "OMRVMThreadListIterator.hpp"
 #include "Wildcard.hpp"
 
 /* the common context is used for the main thread, specifically, so it is not equivalent to other contexts in the list */

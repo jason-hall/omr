@@ -69,7 +69,7 @@ class MM_ScavengerForwardedHeader;
 class MM_CopyForwardScheme : public MM_BaseNonVirtual
 {
 private:
-	OMR_VM *_javaVM;
+	OMR_VM *_omrVM;
 	MM_GCExtensionsBase *_extensions;
 
 	enum ScanReason {
@@ -157,16 +157,16 @@ public:
 private:
 
 	/* Temporary verification functions */
-	void verifyDumpObjectDetails(MM_EnvironmentVLHGC *env, const char *title, fomrobject_t *object);
+	void verifyDumpObjectDetails(MM_EnvironmentVLHGC *env, const char *title, omrobjectptr_t object);
 	void verifyCopyForwardResult(MM_EnvironmentVLHGC *env);
-	bool verifyIsPointerInSurvivor(MM_EnvironmentVLHGC *env, fomrobject_t *object);
-	bool verifyIsPointerInEvacute(MM_EnvironmentVLHGC *env, fomrobject_t *object);
-	void verifyObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr);
-	void verifyMixedObjectSlots(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr);
-	void verifyReferenceObjectSlots(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr);
-	void verifyPointerArrayObjectSlots(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr);
-	//OMRTODO void verifyClassObjectSlots(MM_EnvironmentVLHGC *env, fomrobject_t *classObject);
-	// void verifyClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, fomrobject_t *classLoaderObject);
+	bool verifyIsPointerInSurvivor(MM_EnvironmentVLHGC *env, omrobjectptr_t object);
+	bool verifyIsPointerInEvacute(MM_EnvironmentVLHGC *env, omrobjectptr_t object);
+	void verifyObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr);
+	void verifyMixedObjectSlots(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr);
+	void verifyReferenceObjectSlots(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr);
+	void verifyPointerArrayObjectSlots(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr);
+	//OMRTODO void verifyClassObjectSlots(MM_EnvironmentVLHGC *env, omrobjectptr_t classObject);
+	// void verifyClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, omrobjectptr_t classLoaderObject);
 	void verifyExternalState(MM_EnvironmentVLHGC *env);
 	friend class MM_CopyForwardVerifyScanner;
 
@@ -203,7 +203,7 @@ private:
 	 * Determine whether the object pointer is found within the heap proper.
 	 * @return Boolean indicating if the object pointer is within the heap boundaries.
 	 */
-	MMINLINE bool isHeapObject(fomrobject_t* objectPtr)
+	MMINLINE bool isHeapObject(omrobjectptr_t objectPtr)
 	{
 		return ((_heapBase <= (U_8 *)objectPtr) && (_heapTop > (U_8 *)objectPtr));
 	}
@@ -212,7 +212,7 @@ private:
 	 * Determine whether the object is live relying on survivor/evacuate region flags and mark map. null object is considered marked.
 	 * @return Boolean true if object is live
 	 */
-	bool isLiveObject(fomrobject_t *objectPtr);
+	bool isLiveObject(omrobjectptr_t objectPtr);
 
 	/**
 	 * Determine whether string constants should be treated as clearable.
@@ -263,7 +263,7 @@ private:
 	 * @param array[in] The array to scan
 	 * @param nextIndex[in] The next index in the array to scan
 	 */
-	MMINLINE void reinitArraySplitCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *cache, fomrobject_t *array, UDATA nextIndex);
+	MMINLINE void reinitArraySplitCache(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *cache, omrobjectptr_t array, UDATA nextIndex);
 	
 	MM_CopyScanCacheVLHGC *getFreeCache(MM_EnvironmentVLHGC *env);
 	/**
@@ -293,14 +293,14 @@ private:
 	 * @param objectPtr current object being scanned.
 	 * @param reason to scan (dirty card, packet, scan cache, overflow)
 	 */
-	MMINLINE void scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *objectPtr, ScanReason reason);
+	MMINLINE void scanOwnableSynchronizerObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr, ScanReason reason);
 
 	/**
 	 * Called whenever a ownable synchronizer object is scaned during CopyForwardScheme. Places the object on the thread-specific buffer of gc work thread.
 	 * @param env -- current thread environment
 	 * @param object -- The object of type or subclass of java.util.concurrent.locks.AbstractOwnableSynchronizer.
 	 */
-	MMINLINE void addOwnableSynchronizerObjectInList(MM_EnvironmentVLHGC *env, fomrobject_t object);
+	MMINLINE void addOwnableSynchronizerObjectInList(MM_EnvironmentVLHGC *env, omrobjectptr_t object);
 
 	/**
 	 * Scan the slots of a mixed object.
@@ -310,7 +310,7 @@ private:
 	 * @param objectPtr current object being scanned.
 	 * @param reason to scan (dirty card, packet, scan cache, overflow)
 	 */
-	void scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *objectPtr, ScanReason reason);
+	void scanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr, ScanReason reason);
 	/**
 	 * Scan the slots of a reference mixed object.
 	 * Copy and forward all relevant slots values found in the object.
@@ -319,7 +319,7 @@ private:
 	 * @param objectPtr current object being scanned.
 	 * @param reason to scan (dirty card, packet, scan cache, overflow)	 *
 	 */
-	void  scanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *objectPtr, ScanReason reason);
+	void  scanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr, ScanReason reason);
 	
 	/**
 	 * Called by the root scanner to scan all WeakReference objects discovered by the mark phase,
@@ -359,14 +359,14 @@ private:
 	 * @param headOfList[in] the first object in the linked list 
 	 * @param referenceStats copy forward stats substructure to be updated
 	 */
-	void processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC* region, fomrobject_t* headOfList, MM_ReferenceStats *referenceStats);
+	void processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC* region, omrobjectptr_t headOfList, MM_ReferenceStats *referenceStats);
 	
 	/**
 	 * Walk the list of reference objects recorded in the specified list, changing them to the REMEMBERED state.
 	 * @param env[in] the current thread
 	 * @param headOfList[in] the first object in the linked list 
 	 */
-	void rememberReferenceList(MM_EnvironmentVLHGC *env, fomrobject_t* headOfList);
+	void rememberReferenceList(MM_EnvironmentVLHGC *env, omrobjectptr_t headOfList);
 
 	/**
 	 * Walk all regions in the evacuate set in parallel, remembering any objects on their reference 
@@ -391,7 +391,7 @@ private:
 	 * @param arrayPtr current array being scanned.
 	 * @param reason to scan (dirty card, packet, scan cache, overflow)
 	 */
-	void scanPointerArrayObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *arrayPtr, ScanReason reason);
+	void scanPointerArrayObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t arrayPtr, ScanReason reason);
 
 	/**
 	 * Partially scan the slots of a pointer array object.
@@ -404,7 +404,7 @@ private:
 	 * @param currentSplitUnitOnly[in] do only current array split work unit; do not push the rest of array on the work stack
 	 * @return number of slots scanned
 	 */
-	UDATA scanPointerArrayObjectSlotsSplit(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *arrayPtr, UDATA startIndex, bool currentSplitUnitOnly = false);
+	UDATA scanPointerArrayObjectSlotsSplit(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t arrayPtr, UDATA startIndex, bool currentSplitUnitOnly = false);
 	
 	/**
 	 * For the given object and current starting index, determine the number of slots being scanned now, and create a work unit for the rest of the array.
@@ -415,7 +415,7 @@ private:
 	 * @param currentSplitUnitOnly[in] do only current array split work unit; do not push the rest of array on the work stack*
 	 * @return the number of the slots to be scanned for the current split
 	 */
-	UDATA createNextSplitArrayWorkUnit(MM_EnvironmentVLHGC *env, fomrobject_t *arrayPtr, UDATA startIndex, bool currentSplitUnitOnly = false);
+	UDATA createNextSplitArrayWorkUnit(MM_EnvironmentVLHGC *env, omrobjectptr_t arrayPtr, UDATA startIndex, bool currentSplitUnitOnly = false);
 
 	/**
 	 * Scan the slots of a java.lang.Class object.
@@ -426,7 +426,7 @@ private:
 	 * @param objectPtr current object being scanned.
 	 * @param reason to scan (dirty card, packet, scan cache, overflow)
 	 */
-	// OMRTODO void scanClassObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *classObject, ScanReason reason = SCAN_REASON_COPYSCANCACHE);
+	// OMRTODO void scanClassObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t classObject, ScanReason reason = SCAN_REASON_COPYSCANCACHE);
 	/**
 	 * Scan the slots of a java.lang.ClassLoader object.
 	 * Copy and forward all relevant slots values found in the object, as well
@@ -436,29 +436,29 @@ private:
 	 * @param objectPtr current object being scanned.
 	 * @param reason to scan (dirty card, packet, scan cache, overflow)
 	 */
-	// OMRTODO void scanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *classLoaderObject, ScanReason reason = SCAN_REASON_COPYSCANCACHE);
+	// OMRTODO void scanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t classLoaderObject, ScanReason reason = SCAN_REASON_COPYSCANCACHE);
 
 	/**
 	 * Determine whether the object is in evacuate memory or not.
 	 * @param objectPtr[in] Object pointer whose properties are being examined.
 	 * @return true if the object is found in evacuate memory, false otherwise.
 	 */
-	MMINLINE bool isObjectInEvacuateMemory(fomrobject_t *objectPtr);
-	MMINLINE bool isObjectInEvacuateMemoryNoCheck(fomrobject_t *objectPtr);
+	MMINLINE bool isObjectInEvacuateMemory(omrobjectptr_t objectPtr);
+	MMINLINE bool isObjectInEvacuateMemoryNoCheck(omrobjectptr_t objectPtr);
 
 	/**
 	 * Determine whether the object is in survivor memory or not.
 	 * @param objectPtr[in] Object pointer whose properties are being examined.
 	 * @return true if the object is found in survivor memory, false otherwise.
 	 */
-	MMINLINE bool isObjectInSurvivorMemory(fomrobject_t *objectPtr);
+	MMINLINE bool isObjectInSurvivorMemory(omrobjectptr_t objectPtr);
 
 	/**
 	 * Determine whether the object is in evacuate/survivor memory or not.
 	 * @param objectPtr[in] Object pointer whose properties are being examined.
 	 * @return true if the object is found in evacuate/survivor memory, false otherwise.
 	 */
-	MMINLINE bool isObjectInNurseryMemory(fomrobject_t *objectPtr);
+	MMINLINE bool isObjectInNurseryMemory(omrobjectptr_t objectPtr);
 
 	/**
 	 * @param doesObjectNeedHash[out]		True, if object need to store hashcode in hashslot
@@ -553,7 +553,7 @@ private:
 	 * @param objectReserveSizeInBytes Amount of bytes to be reserved (can be greater than the original object size) for copying.
 	 * @return a CopyScanCache which contains the reserved memory or NULL if the reserve was not successful.
 	 */
-	MMINLINE MM_CopyScanCacheVLHGC *reserveMemoryForCopy(MM_EnvironmentVLHGC *env, fomrobject_t *objectToEvacuate, MM_AllocationContextTarok *reservingContext, UDATA objectReserveSizeInBytes);
+	MMINLINE MM_CopyScanCacheVLHGC *reserveMemoryForCopy(MM_EnvironmentVLHGC *env, omrobjectptr_t objectToEvacuate, MM_AllocationContextTarok *reservingContext, UDATA objectReserveSizeInBytes);
 
 	void flushCaches(MM_CopyScanCacheVLHGC *cache);
 	
@@ -563,7 +563,7 @@ private:
 	 */
 	void addCopyCachesToFreeList(MM_EnvironmentVLHGC *env);
 
-	fomrobject_t *updateForwardedPointer(fomrobject_t *objectPtr);
+	omrobjectptr_t updateForwardedPointer(omrobjectptr_t objectPtr);
 
 	/**
 	 * Checks to see if there is any scan work in the given list.
@@ -633,7 +633,7 @@ private:
 	 * @param objectPtr[in] current object being scanned
  	 * @param reason[in] reason to scan (dirty card, packet, scan cache, overflow)
  	 */
-	MMINLINE void scanObject(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *objectPtr, ScanReason reason);
+	MMINLINE void scanObject(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr, ScanReason reason);
 
 	/**
 	 * Update scan for abort phase (workstack phase)
@@ -641,7 +641,7 @@ private:
 	 * @param objectPtr[in] current object being scanned.
 	 * @param reason[in] reason to scan (dirty card, packet, scan cache, overflow)
 	 */
-	MMINLINE void updateScanStats(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, ScanReason reason);
+	MMINLINE void updateScanStats(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, ScanReason reason);
 	
 	MMINLINE UDATA scanToCopyDistance(MM_CopyScanCacheVLHGC* cache);
 	MMINLINE bool bestCacheForScanning(MM_CopyScanCacheVLHGC* copyCache, MM_CopyScanCacheVLHGC** scanCache);
@@ -676,7 +676,7 @@ private:
 	 * @param nextScanCache the updated scanCache after re-aliasing.
 	 * @return whether current object is still only partially scanned
 	 */
-	MMINLINE bool incrementalScanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_CopyScanCacheVLHGC* scanCache, fomrobject_t *objectPtr,
+	MMINLINE bool incrementalScanMixedObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_CopyScanCacheVLHGC* scanCache, omrobjectptr_t objectPtr,
 		bool hasPartiallyScannedObject, MM_CopyScanCacheVLHGC** nextScanCache);
 	/**
 	 * Scans the slots of a java.lang.Class object, remembering objects as required.
@@ -687,7 +687,7 @@ private:
 	 * @note The current implementation will not interrupt, completing the scan of the object before returning.
 	 * @see MM_CopyForwardScheme:incrementalScanMixedObjectSlots
 	 */
-	MMINLINE bool incrementalScanClassObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_CopyScanCacheVLHGC* scanCache, fomrobject_t *objectPtr,
+	MMINLINE bool incrementalScanClassObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_CopyScanCacheVLHGC* scanCache, omrobjectptr_t objectPtr,
 		bool hasPartiallyScannedObject, MM_CopyScanCacheVLHGC** nextScanCache);
 	/**
 	 * Scans the slots of a java.lang.ClassLoader object, remembering objects as required.
@@ -698,7 +698,7 @@ private:
 	 * @note The current implementation will not interrupt, completing the scan of the object before returning.
 	 * @see MM_CopyForwardScheme:incrementalScanMixedObjectSlots
 	 */
-	// OMRTODO MMINLINE bool incrementalScanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_CopyScanCacheVLHGC* scanCache, fomrobject_t *objectPtr,
+	// OMRTODO MMINLINE bool incrementalScanClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_CopyScanCacheVLHGC* scanCache, omrobjectptr_t objectPtr,
 			//bool hasPartiallyScannedObject, MM_CopyScanCacheVLHGC** nextScanCache);
 	/**
 	 * Scans the slots of a PointerArrayObject, remembering objects as required. Scanning is interrupted
@@ -707,7 +707,7 @@ private:
 	 * @param reservingContext[in] The context to which we would prefer to copy any objects discovered in this method
 	 * @see MM_CopyForwardScheme:incrementalScanMixedObjectSlots
 	 */
-	MMINLINE bool incrementalScanPointerArrayObjectSlots(MM_EnvironmentVLHGC *env, 	MM_AllocationContextTarok *reservingContext, MM_CopyScanCacheVLHGC* scanCache, fomrobject_t *objectPtr,
+	MMINLINE bool incrementalScanPointerArrayObjectSlots(MM_EnvironmentVLHGC *env, 	MM_AllocationContextTarok *reservingContext, MM_CopyScanCacheVLHGC* scanCache, omrobjectptr_t objectPtr,
 		bool hasPartiallyScannedObject, MM_CopyScanCacheVLHGC** nextScanCache);
 	/**
 	 * Scans the slots of a ReferenceObject, remembering objects as required. Scanning is interrupted
@@ -716,7 +716,7 @@ private:
 	 * @param reservingContext[in] The context to which we would prefer to copy any objects discovered in this method
 	 * @see MM_CopyForwardScheme:incrementalScanMixedObjectSlots
 	 */
-	MMINLINE bool incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_CopyScanCacheVLHGC* scanCache, fomrobject_t *objectPtr,
+	MMINLINE bool incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_CopyScanCacheVLHGC* scanCache, omrobjectptr_t objectPtr,
 		bool hasPartiallyScannedObject, MM_CopyScanCacheVLHGC** nextScanCache);
 	 /**
 	 * Scans the objects to scan in the env->_scanCache.
@@ -744,7 +744,7 @@ private:
 	 * @param env[in] the current thread
 	 * @param headObject[in] the object at the head of the list
 	 */
-	void scanFinalizableList(MM_EnvironmentVLHGC *env, fomrobject_t headObject);
+	void scanFinalizableList(MM_EnvironmentVLHGC *env, omrobjectptr_t headObject);
 #endif /* J9VM_GC_FINALIZATION */
 
 	/**
@@ -771,7 +771,7 @@ private:
 	 * @param slotObject the slot to be copied or updated
 	 * @return true if copy succeeded (or no copying was involved)
 	 */
-	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *objectPtr, volatile fomrobject_t* slot);
+	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr, volatile omrobjectptr_t slot);
 
 	/**
 	 * Update the given slot to point at the new location of the object, after copying the object if it was not already.
@@ -783,7 +783,7 @@ private:
 	 * @param slot the slot to be copied or updated
 	 * @return true if copy succeeded (or no copying was involved)
 	 */
-	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *objectPtr, GC_SlotObject *slotObject);
+	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr, GC_SlotObject *slotObject);
 
 	/**
 	 * Update the given slot to point at the new location of the object, after copying the object if it was not already.
@@ -796,7 +796,7 @@ private:
 	 * @param slotObject the slot to be copied or updated
 	 * @return true if copy succeeded (or no copying was involved)
 	 */
-	MMINLINE bool copyAndForwardPointerArray(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *arrayPtr, UDATA startIndex, GC_SlotObject *slotObject);
+	MMINLINE bool copyAndForwardPointerArray(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t arrayPtr, UDATA startIndex, GC_SlotObject *slotObject);
 
 
 	/**
@@ -808,7 +808,7 @@ private:
 	 * @param objectPtrIndirect the slot to be copied or updated
 	 * @return true if copy succeeded (or no copying was involved)
 	 */
-	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, volatile fomrobject_t* objectPtrIndirect);
+	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, volatile omrobjectptr_t *objectPtrIndirect);
 
 	/**
 	 * If class unloading is enabled, copy the specified object's class object and remember the object as an instance.
@@ -817,7 +817,7 @@ private:
 	 * @param objectPtr[in] the object whose class should be copied
 	 * @return true if copy succeeded (or no copying was involved)
 	 */
-	// OMRTODO MMINLINE bool copyAndForwardObjectClass(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, fomrobject_t *objectPtr);
+	// OMRTODO MMINLINE bool copyAndForwardObjectClass(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr);
 
 	/**
 	 * Answer the new location of an object after it has been copied and forwarded.
@@ -829,9 +829,9 @@ private:
 	 * @note This will respect any alignment requirements due to hot fields etc.
 	 * @return an object pointer representing the new location of the object, or the original object pointer on failure.
 	 */
-	fomrobject_t *copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader);
+	omrobjectptr_t copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader);
 #if defined(J9VM_GC_ARRAYLETS)
-	void updateInternalLeafPointersAfterCopy(fomrobject_t *destinationPtr, fomrobject_t *sourcePtr);
+	void updateInternalLeafPointersAfterCopy(omrobjectptr_t destinationPtr, omrobjectptr_t sourcePtr);
 #endif /* J9VM_GC_ARRAYLETS */
 	
 	/**
@@ -851,7 +851,7 @@ private:
 	 * @param atomicHeadSlotIndex Slot index of mark map where the update must be atomic.
 	 * @param atomicTailSlotIndex Slot index of mark map where the update must be atomic.
 	 */
-	MMINLINE void updateMarkMapCache(MM_EnvironmentVLHGC *env, MM_MarkMap *markMap, fomrobject_t *object,
+	MMINLINE void updateMarkMapCache(MM_EnvironmentVLHGC *env, MM_MarkMap *markMap, omrobjectptr_t object,
 			UDATA *slotIndexIndirect, UDATA *bitMaskIndirect, UDATA atomicHeadSlotIndex, UDATA atomicTailSlotIndex);
 
 	/**
@@ -861,7 +861,7 @@ private:
 	 * @param dstObject Destination object that was copy forwarded to.
 	 * @param dstCache Destination copy scan cache for the forwarded object.
 	 */
-	MMINLINE void updateMarkMapAndCardTableOnCopy(MM_EnvironmentVLHGC *env, fomrobject_t *srcObject, fomrobject_t *dstObject, MM_CopyScanCacheVLHGC *dstCache);
+	MMINLINE void updateMarkMapAndCardTableOnCopy(MM_EnvironmentVLHGC *env, omrobjectptr_t srcObject, omrobjectptr_t dstObject, MM_CopyScanCacheVLHGC *dstCache);
 
 	/**
 	 * Determine whether a copy forward cycle that has been started did complete successfully.
@@ -921,7 +921,7 @@ private:
 	 * @param reservingContext[in] The context to which we would prefer to copy any objects discovered in this method
 	 * @param objectPtr[in] the object whose children should be copied
 	 */
-	void copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationContextTarok *reservingContext, fomrobject_t* objectPtr);
+	void copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr);
 #endif /* J9VM_GC_LEAF_BITS */
 
 	/**
@@ -1018,7 +1018,7 @@ protected:
 	 * @param[in] objectPtr A pointer to the object being copied
 	 * @return The reservingContext or the object's owning context if the suggestedContext is not a preferred object relocation context
 	 */
-	MMINLINE MM_AllocationContextTarok *getPreferredAllocationContext(MM_AllocationContextTarok *suggestedContext, fomrobject_t *objectPtr);
+	MMINLINE MM_AllocationContextTarok *getPreferredAllocationContext(MM_AllocationContextTarok *suggestedContext, omrobjectptr_t objectPtr);
 
 public:
 

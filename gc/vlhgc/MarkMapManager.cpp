@@ -33,7 +33,8 @@
 #include "MarkMapManager.hpp"
 
 #include "EnvironmentVLHGC.hpp"
-#include "GCObjectEvents.hpp"
+// OMRTODO #include "GCObjectEvents.hpp"
+#include "Heap.hpp"
 #include "HeapMapIterator.hpp"
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionManager.hpp"
@@ -43,7 +44,7 @@
 
 MM_MarkMapManager::MM_MarkMapManager(MM_EnvironmentVLHGC *env)
 	: MM_BaseNonVirtual()
-	, _extensions(MM_GCExtensionsBase::getExtensions(env))
+	, _extensions(MM_GCExtensionsBase::getExtensions(env->getOmrVM()))
 	, _nextMarkMap(NULL)
 	, _previousMarkMap(NULL)
 	, _deleteEventShadowMarkMap(NULL)
@@ -136,8 +137,8 @@ MM_MarkMapManager::collectorStartup(MM_GCExtensionsBase *extensions)
 	/* disabling the hook will fail if someone has already hooked or reserved it */
 	bool hookInUse = (0 != (*omrHookInterface)->J9HookDisable(omrHookInterface, J9HOOK_MM_OMR_OBJECT_DELETE));
 	if (hookInUse) {
-		OMR_VM *javaVM = (OMR_VM *)extensions->getOmrVM()->_language_vm;
-        OMR_VMThread *currentThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+		OMR_VM *omrVM = (OMR_VM *)extensions->getOmrVM();
+		OMR_VMThread *currentThread = omr_vmthread_getCurrent(omrVM);
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(currentThread);
 		_deleteEventShadowMarkMap = MM_MarkMap::newInstance(env, extensions->getHeap()->getMaximumPhysicalRange());
 		if (NULL != _deleteEventShadowMarkMap) {
@@ -207,7 +208,7 @@ MM_MarkMapManager::savePreviousMarkMapForDeleteEvents(MM_EnvironmentVLHGC *env)
 	UDATA *targetBits = _deleteEventShadowMarkMap->getHeapMapBits();
 	UDATA *sourceBits = _previousMarkMap->getHeapMapBits();
 	
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_HeapRegionManager *regionManager = extensions->heap->getHeapRegionManager();
 	GC_HeapRegionIterator regionIterator(regionManager);
 	MM_HeapRegionDescriptor *region = NULL;
@@ -215,8 +216,8 @@ MM_MarkMapManager::savePreviousMarkMapForDeleteEvents(MM_EnvironmentVLHGC *env)
 		if (region->hasValidMarkMap()) {
 			void *base = region->getLowAddress();
 			void *top = region->getHighAddress();
-			UDATA baseIndex = _previousMarkMap->getSlotIndex((fomrobject_t*)base);
-			UDATA topIndex = _previousMarkMap->getSlotIndex((fomrobject_t*)top);
+			UDATA baseIndex = _previousMarkMap->getSlotIndex((omrobjectptr_t)base);
+			UDATA topIndex = _previousMarkMap->getSlotIndex((omrobjectptr_t)top);
 			UDATA bytesToCopy = (topIndex - baseIndex) * sizeof(UDATA);
 			memcpy(&targetBits[baseIndex], &sourceBits[baseIndex], bytesToCopy);
 		}
@@ -229,7 +230,7 @@ void
 MM_MarkMapManager::reportDeletedObjects(MM_EnvironmentVLHGC *env, MM_MarkMap *oldMap, MM_MarkMap *newMap)
 {
 	Assert_MM_true(NULL != _deleteEventShadowMarkMap);
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	MM_HeapRegionManager *regionManager = extensions->heap->getHeapRegionManager();
 	GC_HeapRegionIterator regionIterator(regionManager);
 	MM_HeapRegionDescriptor *region = NULL;
@@ -240,7 +241,7 @@ MM_MarkMapManager::reportDeletedObjects(MM_EnvironmentVLHGC *env, MM_MarkMap *ol
 		if (region->hasValidMarkMap()) {
 			/* we can't use the GC_ObjectHeapBufferedIterator since we need to control which mark map we are walking */
 			MM_HeapMapIterator iterator(extensions, oldMap, (UDATA *)base, (UDATA *)top, false);
-			fomrobject_t *object = NULL;
+			omrobjectptr_t object = NULL;
 			while (NULL != (object = iterator.nextObject())) {
 				if (!newMap->isBitSet(object)) {
 					/* this object died during the collect */
@@ -248,8 +249,8 @@ MM_MarkMapManager::reportDeletedObjects(MM_EnvironmentVLHGC *env, MM_MarkMap *ol
 				}
 			}
 		} else if (region->containsObjects()) {
-			GC_ObjectHeapIteratorAddressOrderedList iterator(extensions, (fomrobject_t *)region->getLowAddress(), (fomrobject_t *)((MM_MemoryPoolBumpPointer *)region->getMemoryPool())->getAllocationPointer(), false, false);
-			fomrobject_t *object = NULL;
+			GC_ObjectHeapIteratorAddressOrderedList iterator(extensions, (omrobjectptr_t)region->getLowAddress(), (omrobjectptr_t)((MM_MemoryPoolBumpPointer *)region->getMemoryPool())->getAllocationPointer(), false, false);
+			omrobjectptr_t object = NULL;
 			while (NULL != (object = iterator.nextObject())) {
 				if (!newMap->isBitSet(object)) {
 					/* this object wasn't marked during the collect */
@@ -270,7 +271,7 @@ MM_MarkMapManager::verifyNextMarkMapSubsetOfPrevious(MM_EnvironmentVLHGC *env)
 		/* TODO: check for exactly MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED once this is correctly set */
 		if (region->containsObjects()) {
 			MM_HeapMapIterator nextMapWalker(_extensions, _nextMarkMap, (UDATA *)region->getLowAddress(), (UDATA *)region->getHighAddress());
-			fomrobject_t *object = nextMapWalker.nextObject();
+			omrobjectptr_t object = nextMapWalker.nextObject();
 			while (NULL != object) {
 				bool doesMatch = _previousMarkMap->isBitSet(object);
 				Assert_MM_true(doesMatch);

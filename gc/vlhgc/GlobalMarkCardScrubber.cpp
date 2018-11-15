@@ -34,6 +34,7 @@
 #include "CycleState.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentVLHGC.hpp"
+#include "Heap.hpp"
 #include "HeapMapWordIterator.hpp"
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "HeapRegionIterator.hpp"
@@ -47,7 +48,7 @@
 MM_GlobalMarkCardScrubber::MM_GlobalMarkCardScrubber(MM_EnvironmentVLHGC *env, MM_HeapMap *map, UDATA yieldCheckFrequency)
 	: MM_CardCleaner()
 	, _markMap(map)
-	, _interRegionRememberedSet(MM_GCExtensionsBase::getExtensions(env)->interRegionRememberedSet)
+	, _interRegionRememberedSet(MM_GCExtensionsBase::getExtensions(env->getOmrVM())->interRegionRememberedSet)
 	, _yieldCheckFrequency(yieldCheckFrequency)
 	, _countBeforeYieldCheck(yieldCheckFrequency)
 {
@@ -105,7 +106,7 @@ MM_GlobalMarkCardScrubber::scrubObjectsInRange(MM_EnvironmentVLHGC *env, void *l
 	for (UDATA bias = 0; bias < CARD_SIZE; bias += J9MODRON_HEAP_BYTES_PER_UDATA_OF_HEAP_MAP) {
 		void *scanAddress = (void *)((UDATA)lowAddress + bias);
 		MM_HeapMapWordIterator markedObjectIterator(_markMap, scanAddress);
-		fomrobject_t *fromObject = NULL;
+		omrobjectptr_t fromObject = NULL;
 		while (doScrub && (NULL != (fromObject = markedObjectIterator.nextObject()))) {
 			doScrub = scrubObject(env, fromObject);
 			count += 1;
@@ -121,20 +122,20 @@ MM_GlobalMarkCardScrubber::scrubObjectsInRange(MM_EnvironmentVLHGC *env, void *l
 }
 
 bool
-MM_GlobalMarkCardScrubber::scrubObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr)
+MM_GlobalMarkCardScrubber::scrubObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr)
 {
 	bool doScrub = true;
 	
 	// OMRTODO J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
 	//Assert_MM_mustBeClass(clazz);
-	switch(MM_GCExtensionsBase::getExtensions(env)->objectModel.getScanType(clazz)) {
+	switch(MM_GCExtensionsBase::getExtensions(env->getOmrVM())->objectModel.getScanType(objectPtr)) {
 		case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT:
 		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 			doScrub = scrubMixedObject(env, objectPtr);
 			break;
-		/* OMRTODOcase GC_ObjectModel::SCAN_CLASS_OBJECT:
+		/* OMRTODO case GC_ObjectModel::SCAN_CLASS_OBJECT:
 			doScrub = scrubClassObject(env, objectPtr);
 			break;
 		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
@@ -155,7 +156,7 @@ MM_GlobalMarkCardScrubber::scrubObject(MM_EnvironmentVLHGC *env, fomrobject_t *o
 }
 
 bool
-MM_GlobalMarkCardScrubber::scrubMixedObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr)
+MM_GlobalMarkCardScrubber::scrubMixedObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr)
 {
 	bool doScrub = true;
 
@@ -164,7 +165,7 @@ MM_GlobalMarkCardScrubber::scrubMixedObject(MM_EnvironmentVLHGC *env, fomrobject
 	GC_MixedObjectIterator mixedObjectIterator(env->getOmrVM(), objectPtr);
 	GC_SlotObject *slotObject = NULL;
 	while (doScrub && (NULL != (slotObject = mixedObjectIterator.nextSlot()))) {
-		fomrobject_t* toObject = slotObject->readReferenceFromSlot();
+		omrobjectptr_t toObject = slotObject->readReferenceFromSlot();
 		doScrub = mayScrubReference(env, objectPtr, toObject);
 	}
 	
@@ -172,7 +173,7 @@ MM_GlobalMarkCardScrubber::scrubMixedObject(MM_EnvironmentVLHGC *env, fomrobject
 }
 
 bool
-MM_GlobalMarkCardScrubber::scrubPointerArrayObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr)
+MM_GlobalMarkCardScrubber::scrubPointerArrayObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr)
 {
 	bool doScrub = true;
 
@@ -181,22 +182,22 @@ MM_GlobalMarkCardScrubber::scrubPointerArrayObject(MM_EnvironmentVLHGC *env, fom
 	GC_PointerArrayIterator arrayIterator((OMR_VM *)env->getLanguageVM(), objectPtr);
 	GC_SlotObject *slotObject = NULL;
 	while (doScrub && (NULL != (slotObject = arrayIterator.nextSlot()))) {
-		fomrobject_t* toObject = slotObject->readReferenceFromSlot();
+		omrobjectptr_t toObject = slotObject->readReferenceFromSlot();
 		doScrub = mayScrubReference(env, objectPtr, toObject);
 	}
 	
 	return doScrub;
 }
 
-#if 0 OMRTODO
+#if 0 // OMRTODO
 bool 
-MM_GlobalMarkCardScrubber::scrubClassObject(MM_EnvironmentVLHGC *env, fomrobject_t *classObject)
+MM_GlobalMarkCardScrubber::scrubClassObject(MM_EnvironmentVLHGC *env, omrobjectptr_t classObject)
 {
 	bool doScrub = scrubMixedObject(env, classObject);
 	
 	J9Class *classPtr = J9VM_J9CLASS_FROM_HEAPCLASS((OMR_VMThread*)env->getLanguageVMThread(), classObject);
 	if (NULL != classPtr) {
-		fomrobject_t * volatile * slotPtr = NULL;
+		omrobjectptr_t volatile * slotPtr = NULL;
 		/*
 		 * Scan J9Class internals using general iterator
 		 * - scan statics fields
@@ -220,7 +221,7 @@ MM_GlobalMarkCardScrubber::scrubClassObject(MM_EnvironmentVLHGC *env, fomrobject
 
 
 bool 
-MM_GlobalMarkCardScrubber::scrubClassLoaderObject(MM_EnvironmentVLHGC *env, fomrobject_t *classLoaderObject)
+MM_GlobalMarkCardScrubber::scrubClassLoaderObject(MM_EnvironmentVLHGC *env, omrobjectptr_t classLoaderObject)
 {
 	bool doScrub = scrubMixedObject(env, classLoaderObject);
 
@@ -230,10 +231,10 @@ MM_GlobalMarkCardScrubber::scrubClassLoaderObject(MM_EnvironmentVLHGC *env, fomr
 		/* No lock is required because this only runs under exclusive access */
 		/* (NULL == classLoader->classHashTable) is true ONLY for DEAD class loaders */
 		Assert_MM_true(NULL != classLoader->classHashTable);
-		GC_ClassLoaderClassesIterator iterator(MM_GCExtensionsBase::getExtensions(env), classLoader);
+		GC_ClassLoaderClassesIterator iterator(MM_GCExtensionsBase::getExtensions(env->getOmrVM()), classLoader);
 		J9Class *clazz = NULL;
 		while (doScrub && (NULL != (clazz = iterator.nextClass()))) {
-			fomrobject_t * classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
+			omrobjectptr_t classObject = J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 			Assert_MM_true(NULL != classObject);
 			doScrub = mayScrubReference(env, classLoaderObject, classObject);
 		}
@@ -260,7 +261,7 @@ MM_GlobalMarkCardScrubber::scrubClassLoaderObject(MM_EnvironmentVLHGC *env, fomr
 #endif
 
 bool
-MM_GlobalMarkCardScrubber::mayScrubReference(MM_EnvironmentVLHGC *env, fomrobject_t *fromObject, fomrobject_t* toObject)
+MM_GlobalMarkCardScrubber::mayScrubReference(MM_EnvironmentVLHGC *env, omrobjectptr_t fromObject, omrobjectptr_t toObject)
 {
 	bool doScrub = true;
 
@@ -282,14 +283,14 @@ void
 MM_ParallelScrubCardTableTask::run(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	
 	Trc_MM_ParallelScrubCardTableTask_scrubCardTable_Entry(env->getLanguageVMThread());
 	Assert_MM_true(extensions->tarokEnableCardScrubbing);
 	Assert_MM_true(MM_CycleState::CT_GLOBAL_MARK_PHASE == env->_cycleState->_collectionType);
 	
-	U_64 cleanStartTime = j9time_hires_clock();
+	U_64 cleanStartTime = omrtime_hires_clock();
 	
 	/* 4096 is an arbitrary number which determines how often the task checks if it should yield. 
 	 * It currently matches MM_GlobalMarkingScheme::_arraySplitSize. 
@@ -310,13 +311,13 @@ MM_ParallelScrubCardTableTask::run(MM_EnvironmentBase *envBase)
 		}
 	}
 	
-	U_64 cleanEndTime = j9time_hires_clock();
+	U_64 cleanEndTime = omrtime_hires_clock();
 	env->_cardCleaningStats.addToCardCleaningTime(cleanStartTime, cleanEndTime);
 	
 	Trc_MM_ParallelScrubCardTableTask_scrubCardTable_Exit(env->getLanguageVMThread(),
 		env->getSlaveID(),
 		scrubber.getScrubbedObjects(), scrubber.getScrubbedCards(), scrubber.getDirtyCards(), scrubber.getGMPMustScanCards(),
-		j9time_hires_delta(cleanStartTime, cleanEndTime, J9PORT_TIME_DELTA_IN_MICROSECONDS),
+		omrtime_hires_delta(cleanStartTime, cleanEndTime, OMRPORT_TIME_DELTA_IN_MICROSECONDS),
 		didTimeout() ? "true" : "false");
 }
 
@@ -343,7 +344,7 @@ bool
 MM_ParallelScrubCardTableTask::shouldYieldFromTask(MM_EnvironmentBase *env)
 {
 	if (!_timeLimitWasHit) {
-		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 		I_64 currentTime = omrtime_current_time_millis();
 						
 		if (currentTime >= _timeThreshold) {

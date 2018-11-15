@@ -29,6 +29,7 @@
 //#include "j2sever.h"
 #include "ModronAssertions.h"
 #include "objectdescription.h"
+#include "thrtypes.h"
 
 #include <string.h>
 // OMRTODO #include "ClassIterator.hpp"
@@ -101,7 +102,7 @@ MM_ParallelPartialMarkTask::masterCleanup(MM_EnvironmentBase *envBase)
 
 	_markingScheme->clearCachedState();
 
-	MM_GCExtensionsBase::getExtensions(env)->interRegionRememberedSet->resetOverflowedList();
+	MM_GCExtensionsBase::getExtensions(env->getOmrVM())->interRegionRememberedSet->resetOverflowedList();
 }
 
 void
@@ -132,15 +133,15 @@ MM_ParallelPartialMarkTask::setup(MM_EnvironmentBase *envBase)
 	env->_workPacketStats.clear();
 	
 	/* record that this thread is participating in this cycle */
-	env->_markVLHGCStats._gcCount = MM_GCExtensionsBase::getExtensions(env)->globalVLHGCStats.gcCount;
-	env->_workPacketStats._gcCount = MM_GCExtensionsBase::getExtensions(env)->globalVLHGCStats.gcCount;
+	env->_markVLHGCStats._gcCount = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->globalVLHGCStats.gcCount;
+	env->_workPacketStats._gcCount = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->globalVLHGCStats.gcCount;
 }
 
 void
 MM_ParallelPartialMarkTask::cleanup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats.merge(&env->_markVLHGCStats);
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.merge(&env->_workPacketStats);
@@ -154,9 +155,9 @@ MM_ParallelPartialMarkTask::cleanup(MM_EnvironmentBase *envBase)
 	Trc_MM_ParallelPartialMarkTask_parallelStats(
 		env->getLanguageVMThread(),
 		(U_32)env->getSlaveID(),
-		(U_32)j9time_hires_delta(0, env->_workPacketStats._workStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
-		(U_32)j9time_hires_delta(0, env->_workPacketStats._completeStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
-		(U_32)j9time_hires_delta(0, env->_markVLHGCStats._syncStallTime, J9PORT_TIME_DELTA_IN_MILLISECONDS),
+		(U_32)omrtime_hires_delta(0, env->_workPacketStats._workStallTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS),
+		(U_32)omrtime_hires_delta(0, env->_workPacketStats._completeStallTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS),
+		(U_32)omrtime_hires_delta(0, env->_markVLHGCStats._syncStallTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS),
 		(U_32)env->_workPacketStats._workStallCount,
 		(U_32)env->_workPacketStats._completeStallCount,
 		(U_32)env->_markVLHGCStats._syncStallCount,
@@ -171,10 +172,10 @@ void
 MM_ParallelPartialMarkTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, const char *id)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	U_64 startTime = j9time_hires_clock();
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	U_64 startTime = omrtime_hires_clock();
 	MM_ParallelTask::synchronizeGCThreads(env, id);
-	U_64 endTime = j9time_hires_clock();
+	U_64 endTime = omrtime_hires_clock();
 	env->_markVLHGCStats.addToSyncStallTime(startTime, endTime);
 }
 
@@ -182,10 +183,10 @@ bool
 MM_ParallelPartialMarkTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *envBase, const char *id)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	U_64 startTime = j9time_hires_clock();
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	U_64 startTime = omrtime_hires_clock();
 	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
-	U_64 endTime = j9time_hires_clock();
+	U_64 endTime = omrtime_hires_clock();
 	env->_markVLHGCStats.addToSyncStallTime(startTime, endTime);
 	
 	return result;	
@@ -195,10 +196,10 @@ bool
 MM_ParallelPartialMarkTask::synchronizeGCThreadsAndReleaseSingleThread(MM_EnvironmentBase *envBase, const char *id)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	U_64 startTime = j9time_hires_clock();
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	U_64 startTime = omrtime_hires_clock();
 	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseSingleThread(env, id);
-	U_64 endTime = j9time_hires_clock();
+	U_64 endTime = omrtime_hires_clock();
 	env->_markVLHGCStats.addToSyncStallTime(startTime, endTime);
 
 	return result;
@@ -253,7 +254,7 @@ MM_PartialMarkingScheme::initialize(MM_EnvironmentVLHGC *env)
 	 * is a block of contiguous memory
 	 */
 	_arraySplitSize = 4096;
-	_interRegionRememberedSet = MM_GCExtensionsBase::getExtensions(env)->interRegionRememberedSet;
+	_interRegionRememberedSet = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->interRegionRememberedSet;
 	return true;
 }
 
@@ -372,7 +373,7 @@ MM_PartialMarkingScheme::clearCachedState()
  ****************************************
  */
 bool
-MM_PartialMarkingScheme::isMarked(fomrobject_t *objectPtr)
+MM_PartialMarkingScheme::isMarked(omrobjectptr_t objectPtr)
 {
 	bool shouldCheck = isHeapObject(objectPtr);
 	if(shouldCheck) {
@@ -384,7 +385,7 @@ MM_PartialMarkingScheme::isMarked(fomrobject_t *objectPtr)
 }
 
 MMINLINE bool
-MM_PartialMarkingScheme::markObjectNoCheck(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, bool leafType)
+MM_PartialMarkingScheme::markObjectNoCheck(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, bool leafType)
 {
 	/* If bit not already set in mark map then set it */
 	if (!_markMap->atomicSetBit(objectPtr)) {
@@ -402,7 +403,7 @@ MM_PartialMarkingScheme::markObjectNoCheck(MM_EnvironmentVLHGC *env, fomrobject_
 }
 
 MMINLINE bool
-MM_PartialMarkingScheme::markObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, bool leafType)
+MM_PartialMarkingScheme::markObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, bool leafType)
 {
 	bool didMark = false;
 
@@ -419,7 +420,7 @@ MM_PartialMarkingScheme::markObject(MM_EnvironmentVLHGC *env, fomrobject_t *obje
 }
 
 MMINLINE void
-MM_PartialMarkingScheme::rememberReferenceIfRequired(MM_EnvironmentVLHGC *env, fomrobject_t *from, fomrobject_t *to)
+MM_PartialMarkingScheme::rememberReferenceIfRequired(MM_EnvironmentVLHGC *env, omrobjectptr_t from, omrobjectptr_t to)
 {
 	if (NULL != to) {
 		if ((((UDATA)from) ^ ((UDATA)to)) >= _regionSize) {
@@ -432,10 +433,10 @@ MM_PartialMarkingScheme::rememberReferenceIfRequired(MM_EnvironmentVLHGC *env, f
 	}
 }
 
-MMINLINE void
-MM_PartialMarkingScheme::markObjectClass(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr)
-{
 #if 0 // OMRTODO
+MMINLINE void
+MM_PartialMarkingScheme::markObjectClass(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr)
+{
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	_extensions->classLoaderRememberedSet->rememberInstance(env, objectPtr);
 	if(isDynamicClassUnloadingEnabled()) {
@@ -444,8 +445,8 @@ MM_PartialMarkingScheme::markObjectClass(MM_EnvironmentVLHGC *env, fomrobject_t 
 		markObjectNoCheck(env, classObject, false);
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
-#endif
 }
+#endif
 
 MMINLINE void
 MM_PartialMarkingScheme::updateScanStats(MM_EnvironmentVLHGC *env, UDATA bytesScanned, ScanReason reason)
@@ -462,6 +463,7 @@ MM_PartialMarkingScheme::updateScanStats(MM_EnvironmentVLHGC *env, UDATA bytesSc
 	}
 }
 
+#if 0 // OMRTODO
 MMINLINE void
 MM_PartialMarkingScheme::addOwnableSynchronizerObjectInList(MM_EnvironmentVLHGC *env, fomrobject_t object)
 {
@@ -470,34 +472,37 @@ MM_PartialMarkingScheme::addOwnableSynchronizerObjectInList(MM_EnvironmentVLHGC 
 		env->_markVLHGCStats._ownableSynchronizerSurvived += 1;
 	}
 }
+#endif
+
 /****************************************
  * Scanning
  ****************************************
  */
 void
-MM_PartialMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, ScanReason reason)
+MM_PartialMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, ScanReason reason)
 {
-	fomrobject_t *endScanPtr;
-	UDATA *descriptionPtr;
-	UDATA descriptionBits;
-	UDATA descriptionIndex;
+#if 0 // OMRTODO
+	omrobjectptr_t endScanPtr;
+	// OMRTODO UDATA *descriptionPtr;
+	// OMRTODO UDATA descriptionBits;
+	// OMRTODO UDATA descriptionIndex;
 #if defined(J9VM_GC_LEAF_BITS)
-	UDATA *leafPtr;
-	UDATA leafBits;
+	// OMRTODO UDATA *leafPtr;
+	// OMRTODO UDATA leafBits;
 #endif /* J9VM_GC_LEAF_BITS */
 
 	// OMRTODO markObjectClass(env, objectPtr);
 	
 	/* Object slots */
-	volatile fomrobject_t* scanPtr = (fomrobject_t*)( objectPtr + 1 );
+	volatile omrobjectptr_t scanPtr = (omrobjectptr_t)(objectPtr + 1);
 	UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
 
 	updateScanStats(env, objectSize, reason);
 
-	endScanPtr = (fomrobject_t*)(((U_8 *)objectPtr) + objectSize);
-	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceDescription;
+	endScanPtr = (omrobjectptr_t)(((U_8 *)objectPtr) + objectSize);
+	// OMRTODO descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceDescription;
 #if defined(J9VM_GC_LEAF_BITS)
-	leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
+	// OMRTODO leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
 
 	if(((UDATA)descriptionPtr) & 1) {
@@ -511,7 +516,8 @@ MM_PartialMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, fomrobject_t 
 		leafBits = *leafPtr++;
 #endif /* J9VM_GC_LEAF_BITS */
 	}
-	descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
+
+	// OMRTODO descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 
 	while(scanPtr < endScanPtr) {
 		/* Determine if the slot should be processed */
@@ -521,7 +527,7 @@ MM_PartialMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, fomrobject_t 
 			 * code if markObject() is inlined.
 			 */
 
-			GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
+			GC_SlotObject slotObject(_omrVM, scanPtr);
 			fomrobject_t* slot = slotObject.readReferenceFromSlot();
 			
 #if defined(J9VM_GC_LEAF_BITS)
@@ -543,14 +549,17 @@ MM_PartialMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, fomrobject_t 
 #endif /* J9VM_GC_LEAF_BITS */
 			descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 		}
-		scanPtr += 1;
+		scanPtr += 
+1;
 	}
+#endif
 }
 
 void
-MM_PartialMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, ScanReason reason)
+MM_PartialMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, ScanReason reason)
 {
-	fomrobject_t *endScanPtr;
+#if 0 // OMRTODO
+	omrobjectptr_t endScanPtr;
 	UDATA *descriptionPtr;
 	UDATA descriptionBits;
 	UDATA descriptionIndex;
@@ -666,10 +675,11 @@ MM_PartialMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, fomr
 		}
 		scanPtr += 1;
 	}
+#endif
 }
 
 UDATA
-MM_PartialMarkingScheme::scanPointerArrayObjectSplit(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, UDATA startIndex, ScanReason reason)
+MM_PartialMarkingScheme::scanPointerArrayObjectSplit(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, UDATA startIndex, ScanReason reason)
 {
 	UDATA slotsToScan = 0;
 	UDATA sizeInElements = _extensions->indexableObjectModel.getSizeInElements(objectPtr);
@@ -692,7 +702,7 @@ MM_PartialMarkingScheme::scanPointerArrayObjectSplit(MM_EnvironmentVLHGC *env, f
 		}
 		
 		/* TODO: this iterator scans the array backwards - change it to forward, and optimize it since we can guarantee the range will be contiguous */
-		GC_PointerArrayIterator pointerArrayIterator(_javaVM, (fomrobject_t *)objectPtr);
+		GC_PointerArrayIterator pointerArrayIterator(_omrVM, (omrobjectptr_t)objectPtr);
 		pointerArrayIterator.setIndex(startIndex + slotsToScan);
 		for (UDATA scanCount = 0; scanCount < slotsToScan; scanCount++) {
 			GC_SlotObject *slotObject = pointerArrayIterator.nextSlot();
@@ -700,11 +710,11 @@ MM_PartialMarkingScheme::scanPointerArrayObjectSplit(MM_EnvironmentVLHGC *env, f
 				/* this can happen if the array is only partially allocated */
 				break;
 			}
-			fomrobject_t * value = slotObject->readReferenceFromSlot();
+			omrobjectptr_t value = slotObject->readReferenceFromSlot();
 	
 			markObject(env, value);
 			
-			rememberReferenceIfRequired(env, (fomrobject_t *)objectPtr, value);
+			rememberReferenceIfRequired(env, (omrobjectptr_t)objectPtr, value);
 		}
 	}
 
@@ -713,7 +723,7 @@ MM_PartialMarkingScheme::scanPointerArrayObjectSplit(MM_EnvironmentVLHGC *env, f
 }
 
 void
-MM_PartialMarkingScheme::scanPointerArrayObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, ScanReason reason)
+MM_PartialMarkingScheme::scanPointerArrayObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, ScanReason reason)
 {
 	UDATA bytesScanned = 0;
 	UDATA workItem = (UDATA)env->_workStack.peek(env);
@@ -870,12 +880,13 @@ MM_PartialMarkingScheme::scanClassLoaderSlots(MM_EnvironmentVLHGC *env, J9ClassL
 #endif
 
 void
-MM_PartialMarkingScheme::scanObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr, ScanReason reason)
+MM_PartialMarkingScheme::scanObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr, ScanReason reason)
 {
 	Assert_MM_true(PACKET_INVALID_OBJECT != (UDATA)objectPtr); /* Invalid objects can only exist on the GMP's work packets */
 
-	// OMRTODO J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
-	// Assert_MM_mustBeClass(clazz);
+#if 0 // OMRTODO
+	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+	Assert_MM_mustBeClass(clazz);
 	switch(_extensions->objectModel.getScanType(clazz)) {
 		case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT:
@@ -888,16 +899,14 @@ MM_PartialMarkingScheme::scanObject(MM_EnvironmentVLHGC *env, fomrobject_t *obje
 			scanMixedObject(env, objectPtr, reason);
 			break;
 
-#if 0 // OMRTODO
 		case GC_ObjectModel::SCAN_CLASS_OBJECT:
 			scanClassObject(env, objectPtr, reason);
 			break;
 		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
 			scanClassLoaderObject(env, objectPtr, reason);
-			break;
-#endif
+	
 		case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
-			scanPointerArrayObject(env, (fomrobject_t *)objectPtr, reason);
+			scanPointerArrayObject(env, (omrobjectptr_t)objectPtr, reason);
 			break;
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 			scanReferenceMixedObject(env, objectPtr, reason);
@@ -908,7 +917,8 @@ MM_PartialMarkingScheme::scanObject(MM_EnvironmentVLHGC *env, fomrobject_t *obje
 		default:
 			Trc_MM_PartialMarkingScheme_scanObject_invalid(env->getLanguageVMThread(), objectPtr, reason);
 			Assert_MM_unreachable();
-	}
+	}		break;
+#endif
 }
 	
 /**
@@ -919,16 +929,16 @@ MM_PartialMarkingScheme::scanObject(MM_EnvironmentVLHGC *env, fomrobject_t *obje
 MMINLINE void
 MM_PartialMarkingScheme::completeScan(MM_EnvironmentVLHGC *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	do {
-		fomrobject_t *objectPtr = NULL;
-		while (NULL != (objectPtr = (fomrobject_t *)env->_workStack.pop(env))) {
-			U_64 scanStartTime = j9time_hires_clock();
+		omrobjectptr_t objectPtr = NULL;
+		while (NULL != (objectPtr = (omrobjectptr_t)env->_workStack.pop(env))) {
+			U_64 scanStartTime = omrtime_hires_clock();
 			do {
 				scanObject(env, objectPtr, SCAN_REASON_PACKET);
-				objectPtr = (fomrobject_t *)env->_workStack.popNoWait(env);
+				objectPtr = (omrobjectptr_t)env->_workStack.popNoWait(env);
 			} while (NULL != objectPtr);
-			U_64 scanEndTime = j9time_hires_clock();
+			U_64 scanEndTime = omrtime_hires_clock();
 			env->_markVLHGCStats.addToScanTime(scanStartTime, scanEndTime);
 		}
 		/* A GMP can create an inconsistency in how we observe overflow:  one thread might fall out of the above loop
@@ -1005,12 +1015,12 @@ private:
 	MM_PartialMarkingScheme *_markingScheme; /**< the MarkingScheme which created this scanner */
 	
 private:
-	virtual void doSlot(fomrobject_t **slotPtr) {
+	virtual void doSlot(omrobjectptr_t *slotPtr) {
 		_markingScheme->markObject((MM_EnvironmentVLHGC *)_env, *slotPtr);
 	}
 
-	virtual void doStackSlot(fomrobject_t **slotPtr, void *walkState, const void* stackLocation) {
-		fomrobject_t *object = *slotPtr;
+	virtual void doStackSlot(omrobjectptr_t *slotPtr, void *walkState, const void* stackLocation) {
+		omrobjectptr_t object = *slotPtr;
 		if (_markingScheme->isHeapObject(object)) {
 			/* heap object - validate and mark */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(0, *slotPtr, stackLocation, walkState).validate(_env));
@@ -1021,12 +1031,12 @@ private:
 		}
 	}
 	
-	virtual void doVMThreadSlot(fomrobject_t **slotPtr, GC_VMThreadIterator *vmThreadIterator) {
-		fomrobject_t *object = *slotPtr;
+	virtual void doVMThreadSlot(omrobjectptr_t *slotPtr, GC_VMThreadIterator *vmThreadIterator) {
+		omrobjectptr_t object = *slotPtr;
 		if (_markingScheme->isHeapObject(object)) {
 			_markingScheme->markObject((MM_EnvironmentVLHGC *)_env, object);
 		} else if (NULL != object) {
-			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
+			// OMRTODO Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
 		}
 	}
 
@@ -1043,7 +1053,7 @@ private:
 	}
 #endif
 
-	virtual void doFinalizableObject(fomrobject_t object) {
+	virtual void doFinalizableObject(omrobjectptr_t object) {
 		_markingScheme->markObject((MM_EnvironmentVLHGC *)_env, object);
 	}
 
@@ -1071,13 +1081,13 @@ public:
 
 		scanThreads(env);
 #if defined(J9VM_GC_FINALIZATION)
-		scanFinalizableObjects(env);
+		// OMRTODO scanFinalizableObjects(env);
 #endif /* J9VM_GC_FINALIZATION */
-		scanJNIGlobalReferences(env);
+		// OMRTODO scanJNIGlobalReferences(env);
 
-		if(_stringTableAsRoot){
-			scanStringTable(env);
-		}
+		// OMRTODO if(_stringTableAsRoot){
+			//scanStringTable(env);
+		//}
 	}
 
 	MM_PartialMarkingSchemeRootMarker(MM_EnvironmentBase *env, MM_PartialMarkingScheme *markingScheme) :
@@ -1098,7 +1108,7 @@ class MM_PartialMarkingSchemeRootClearer : public MM_RootScanner
 private:
 	MM_PartialMarkingScheme *_markingScheme;
 
-	virtual void doSlot(fomrobject_t **slotPtr) {
+	virtual void doSlot(omrobjectptr_t *slotPtr) {
 		assume0(0);  /* Should not have gotten here - how do you clear a generic slot? */
 	}
 
@@ -1174,53 +1184,54 @@ private:
 		/* empty, move ownable synchronizer processing in marking phase */
 	}
 
-	virtual void doMonitorReference(fomrobject_tMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator) {
-		J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
-		if(!_markingScheme->isMarked((fomrobject_t *)monitor->userData)) {
+	virtual void doMonitorReference(omrthread_monitor_t monitor, GC_HashTableIterator *monitorReferenceIterator) {
+		if(!_markingScheme->isMarked((omrobjectptr_t)monitor->userData)) {
 			monitorReferenceIterator->removeSlot();
 			/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
 			 * monitor is not internal to the GC */
-			static_cast<OMR_VM*>(_omrVM->_language_vm)->internalVMFunctions->objectMonitorDestroy(static_cast<OMR_VM*>(_omrVM->_language_vm), (OMR_VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
+			omrthread_monitor_destroy(monitor);
 		}
 	}
 
 	virtual CompletePhaseCode scanMonitorReferencesComplete(MM_EnvironmentBase *envBase) {
-		MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
+		//MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 		reportScanningStarted(RootScannerEntity_MonitorReferenceObjectsComplete);
-		((OMR_VM *)env->getLanguageVM())->internalVMFunctions->objectMonitorDestroyComplete((OMR_VM *)env->getLanguageVM(), (OMR_VMThread *)env->getLanguageVMThread());
+		// OMRTODO: replace this somehow? ((OMR_VM *)env->getLanguageVM())->internalVMFunctions->objectMonitorDestroyComplete(env->getOmrVM(), (OMR_VMThread *)env->getLanguageVMThread());
 		reportScanningEnded(RootScannerEntity_MonitorReferenceObjectsComplete);
 		return complete_phase_OK;
 	}
 
-	virtual void doJNIWeakGlobalReference(fomrobject_t **slotPtr) {
-		fomrobject_t *objectPtr = *slotPtr;
+	virtual void doJNIWeakGlobalReference(omrobjectptr_t *slotPtr) {
+		omrobjectptr_t objectPtr = *slotPtr;
 		if(objectPtr && !_markingScheme->isMarked(objectPtr)) {
 			*slotPtr = NULL;
 		}
 	}
 
 #if defined(J9VM_GC_MODRON_SCAVENGER)
-	virtual void doRememberedSetSlot(fomrobject_t **slotPtr, GC_RememberedSetSlotIterator *rememberedSetSlotIterator) {
-		fomrobject_t *objectPtr = *slotPtr;
+	virtual void doRememberedSetSlot(omrobjectptr_t *slotPtr, GC_RememberedSetSlotIterator *rememberedSetSlotIterator) {
+		omrobjectptr_t objectPtr = *slotPtr;
 		if( (objectPtr == NULL) || !_markingScheme->isMarked(objectPtr)) {
 			rememberedSetSlotIterator->removeSlot();
 		}
 	}
 #endif /* defined(J9VM_GC_MODRON_SCAVENGER) */
 
-	virtual void doStringTableSlot(fomrobject_t **slotPtr, GC_StringTableIterator *stringTableIterator) {
+#if 0 // OMRTODO
+	virtual void doStringTableSlot(omrobjectptr_t *slotPtr, GC_StringTableIterator *stringTableIterator) {
 		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._stringConstantsCandidates += 1;
 		if(!_markingScheme->isMarked(*slotPtr)) {
 			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._stringConstantsCleared += 1;
 			stringTableIterator->removeSlot();
 		}
 	}
+#endif
 
 	/**
 	 * @Clear the string table cache slot if the object is not marked
 	 */
-	virtual void doStringCacheTableSlot(fomrobject_t **slotPtr) {
-		fomrobject_t *objectPtr = *slotPtr;
+	virtual void doStringCacheTableSlot(omrobjectptr_t *slotPtr) {
+		omrobjectptr_t objectPtr = *slotPtr;
 		if((NULL != objectPtr) && (!_markingScheme->isMarked(*slotPtr))) {
 			*slotPtr = NULL;
 		}	
@@ -1233,7 +1244,7 @@ private:
 #endif /* J9VM_GC_FINALIZATION */
 
 #if defined(J9VM_OPT_JVMTI)
-	virtual void doJVMTIObjectTagSlot(fomrobject_t **slotPtr, GC_JVMTIObjectTagTableIterator *objectTagTableIterator) {
+	virtual void doJVMTIObjectTagSlot(omrobjectptr_t *slotPtr, GC_JVMTIObjectTagTableIterator *objectTagTableIterator) {
 		if(!_markingScheme->isMarked(*slotPtr)) {
 			objectTagTableIterator->removeSlot();
 		}
@@ -1311,13 +1322,13 @@ MM_PartialMarkingScheme::initializeForPartialCollect(MM_EnvironmentVLHGC *env)
 				}
 
 				/* remember reference objects from the GMP cycle */
-				MM_ReferenceObjectList *referenceObjectList = region->getReferenceObjectList();
+				/* OMRTODO MM_ReferenceObjectList *referenceObjectList = region->getReferenceObjectList();
 				referenceObjectList->startWeakReferenceProcessing();
 				referenceObjectList->startSoftReferenceProcessing();
 				referenceObjectList->startPhantomReferenceProcessing();
 				rememberReferenceList(env, referenceObjectList->getPriorWeakList());
 				rememberReferenceList(env, referenceObjectList->getPriorSoftList());
-				rememberReferenceList(env, referenceObjectList->getPriorPhantomList());
+				rememberReferenceList(env, referenceObjectList->getPriorPhantomList()); */
 			}
 		}
 	}
@@ -1326,8 +1337,8 @@ MM_PartialMarkingScheme::initializeForPartialCollect(MM_EnvironmentVLHGC *env)
 void
 MM_PartialMarkingScheme::cleanCardTableForPartialCollect(MM_EnvironmentVLHGC *env, MM_CardCleaner *cardCleaner)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	U_64 cleanStartTime = j9time_hires_clock();
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	U_64 cleanStartTime = omrtime_hires_clock();
 
 	bool gmpIsRunning = (NULL != env->_cycleState->_externalCycleState);
 	MM_CardTable* cardTable = _extensions->cardTable;
@@ -1376,7 +1387,7 @@ MM_PartialMarkingScheme::cleanCardTableForPartialCollect(MM_EnvironmentVLHGC *en
 		}
 	}
 
-	U_64 cleanEndTime = j9time_hires_clock();
+	U_64 cleanEndTime = omrtime_hires_clock();
 	env->_cardCleaningStats.addToCardCleaningTime(cleanStartTime, cleanEndTime);
 	env->_markVLHGCStats.addToScanTime(cleanStartTime, cleanEndTime);
 }
@@ -1402,7 +1413,7 @@ MM_PartialMarkingScheme::markLiveObjectsRoots(MM_EnvironmentVLHGC *env)
 	}
 	
 	MM_PartialMarkingSchemeRootMarker rootScanner(env, this);
-	rootScanner.setStringTableAsRoot(!isCollectStringConstantsEnabled());
+	// OMRTODO rootScanner.setStringTableAsRoot(!isCollectStringConstantsEnabled());
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	// OMRTODO rootScanner.setClassDataAsRoots(!isDynamicClassUnloadingEnabled());
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
@@ -1462,12 +1473,12 @@ void
 MM_PartialMarkingScheme::markLiveObjectsComplete(MM_EnvironmentVLHGC *env)
 {
 	/* ensure that all buffers have been flushed before we start reference processing */
-	env->getGCEnvironment()->_referenceObjectBuffer->flush(env);
+	// OMRTODO env->getGCEnvironment()->_referenceObjectBuffer->flush(env);
 	if (env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
 		/* since we need a sync point here anyway, use this opportunity to determine which regions contain weak and soft references or unfinalized objects */
 		/* (we can't do phantom references yet because unfinalized processing may find more of them) */
 		/* weak and soft references resurrected by finalization need to be cleared immediately since weak and soft processing has already completed */
-		env->_cycleState->_referenceObjectOptions |= MM_CycleState::references_clear_soft;
+		/* OMRTODO env->_cycleState->_referenceObjectOptions |= MM_CycleState::references_clear_soft; TODO: These things should then also not be in OMR?
 		env->_cycleState->_referenceObjectOptions |= MM_CycleState::references_clear_weak;
 		MM_HeapRegionDescriptorVLHGC *region = NULL;
 		GC_HeapRegionIteratorVLHGC regionIterator(_heapRegionManager);
@@ -1477,12 +1488,12 @@ MM_PartialMarkingScheme::markLiveObjectsComplete(MM_EnvironmentVLHGC *env)
 				region->getReferenceObjectList()->startWeakReferenceProcessing();
 				region->getUnfinalizedObjectList()->startUnfinalizedProcessing();
 			}
-		}
+		}*/
 		env->_currentTask->releaseSynchronizedGCThreads(env);
 	}
 	
 	MM_PartialMarkingSchemeRootClearer rootClearer(env, this);
-	rootClearer.setStringTableAsRoot(!isCollectStringConstantsEnabled());
+	// OMRTODO rootClearer.setStringTableAsRoot(!isCollectStringConstantsEnabled());
 	rootClearer.scanClearable(env);
 
 	/* An in-progress GMP may have discovered objects in the collection set and marked them already. Some
@@ -1513,8 +1524,8 @@ MM_PartialMarkingScheme::deleteDeadObjectsFromExternalCycle(MM_EnvironmentVLHGC 
 	while(NULL != (region = regionIterator.nextRegion())) {
 		if(region->_markData._shouldMark) {
 			if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-				UDATA lowIndex = _markMap->getSlotIndex((fomrobject_t*)region->getLowAddress());
-				UDATA highIndex = _markMap->getSlotIndex((fomrobject_t*)region->getHighAddress());
+				UDATA lowIndex = _markMap->getSlotIndex((omrobjectptr_t)region->getLowAddress());
+				UDATA highIndex = _markMap->getSlotIndex((omrobjectptr_t)region->getHighAddress());
 				for (UDATA index = lowIndex; index < highIndex; index++) {
 					UDATA previousSlot = _markMap->getSlot(index);
 					UDATA nextSlot = externalMarkMap->getSlot(index);
@@ -1536,9 +1547,9 @@ MM_PartialMarkingScheme::deleteDeadObjectsFromExternalCycle(MM_EnvironmentVLHGC 
 			/* there is data in this packet so use it */
 			if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 				MM_PacketSlotIterator slotIterator(packet);
-				fomrobject_t **slot = NULL;
+				omrobjectptr_t *slot = NULL;
 				while (NULL != (slot = slotIterator.nextSlot())) {
-					fomrobject_t *object = *slot;
+					omrobjectptr_t object = *slot;
 					Assert_MM_true(NULL != object);
 					if (PACKET_INVALID_OBJECT != (UDATA)object) {
 						totalCount += 1;
@@ -1550,7 +1561,7 @@ MM_PartialMarkingScheme::deleteDeadObjectsFromExternalCycle(MM_EnvironmentVLHGC 
 							deletedCount += 1;
 							/* this object failed to survive the PGC cycle */
 							slotIterator.resetSplitTagIndexForObject(object, PACKET_INVALID_OBJECT);
-							*slot = (fomrobject_t*)PACKET_INVALID_OBJECT;
+							*slot = (omrobjectptr_t)PACKET_INVALID_OBJECT;
 						}
 					}
 				}
@@ -1604,15 +1615,15 @@ MM_PartialMarkingScheme::cleanRegion(MM_EnvironmentVLHGC *env, MM_HeapRegionDesc
 		MM_AtomicOperations::sync();
 		UDATA *heapBase = (UDATA *)region->getLowAddress();
 		UDATA *heapTop = (UDATA *)region->getHighAddress();
-		MM_HeapMapIterator objectIterator = MM_HeapMapIterator(MM_GCExtensionsBase::getExtensions(env), env->_cycleState->_markMap, heapBase, heapTop);
+		MM_HeapMapIterator objectIterator = MM_HeapMapIterator(MM_GCExtensionsBase::getExtensions(env->getOmrVM()), env->_cycleState->_markMap, heapBase, heapTop);
 
-		PORT_ACCESS_FROM_ENVIRONMENT(env);
-		U_64 scanStartTime = j9time_hires_clock();
-		fomrobject_t *object = NULL;
+		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+		U_64 scanStartTime = omrtime_hires_clock();
+		omrobjectptr_t object = NULL;
 		while (NULL != (object = objectIterator.nextObject())) {
 			scanObject(env, object, SCAN_REASON_OVERFLOWED_REGION);
 		}
-		U_64 scanEndTime = j9time_hires_clock();
+		U_64 scanEndTime = omrtime_hires_clock();
 		env->_markVLHGCStats.addToScanTime(scanStartTime, scanEndTime);
 	}
 }
@@ -1631,7 +1642,7 @@ MM_PartialMarkingScheme::scanObjectsInRange(MM_EnvironmentVLHGC *env, void *lowA
 		for (UDATA bias = 0; bias < CARD_SIZE; bias += J9MODRON_HEAP_BYTES_PER_UDATA_OF_HEAP_MAP) {
 			void *scanAddress = (void *)((UDATA)lowAddress + bias);
 			MM_HeapMapWordIterator markedObjectIterator(_markMap, scanAddress);
-			fomrobject_t *fromObject = NULL;
+			omrobjectptr_t fromObject = NULL;
 			while (NULL != (fromObject = markedObjectIterator.nextObject())) {
 				/* this object needs to be re-scanned (to update next mark map and RSM) */
 				if (_extensions->objectModel.isRemembered(fromObject)) {
@@ -1643,7 +1654,7 @@ MM_PartialMarkingScheme::scanObjectsInRange(MM_EnvironmentVLHGC *env, void *lowA
 		for (UDATA bias = 0; bias < CARD_SIZE; bias += J9MODRON_HEAP_BYTES_PER_UDATA_OF_HEAP_MAP) {
 			void *scanAddress = (void *)((UDATA)lowAddress + bias);
 			MM_HeapMapWordIterator markedObjectIterator(_markMap, scanAddress);
-			fomrobject_t *fromObject = NULL;
+			omrobjectptr_t fromObject = NULL;
 			while (NULL != (fromObject = markedObjectIterator.nextObject())) {
 				/* this object needs to be re-scanned (to update next mark map and RSM) */
 				scanObject(env, fromObject, SCAN_REASON_DIRTY_CARD);
@@ -1652,6 +1663,7 @@ MM_PartialMarkingScheme::scanObjectsInRange(MM_EnvironmentVLHGC *env, void *lowA
 	}
 }
 
+#if 0 // OMRTODO
 void
 MM_PartialMarkingScheme::scanWeakReferenceObjects(MM_EnvironmentVLHGC *env)
 {
@@ -1807,11 +1819,11 @@ MM_PartialMarkingScheme::processReferenceList(MM_EnvironmentVLHGC *env, fomrobje
 }
 
 void
-MM_PartialMarkingScheme::rememberReferenceList(MM_EnvironmentVLHGC *env, fomrobject_t* headOfList)
+MM_PartialMarkingScheme::rememberReferenceList(MM_EnvironmentVLHGC *env, omrobjectptr_t headOfList)
 {
 	Assert_MM_true((NULL == headOfList) || (NULL != env->_cycleState->_externalCycleState));
 	
-	fomrobject_t* referenceObj = headOfList;
+	omrobjectptr_t referenceObj = headOfList;
 	while (NULL != referenceObj) {
 		I_32 referenceState = J9GC_J9VMJAVALANGREFERENCE_STATE(env, referenceObj);
 		switch (referenceState) {
@@ -1841,13 +1853,14 @@ MM_PartialMarkingScheme::rememberReferenceList(MM_EnvironmentVLHGC *env, fomrobj
 		referenceObj = _extensions->accessBarrier->getReferenceLink(referenceObj);
 	}
 }
+#endif
 
 void 
 MM_PartialMarkingScheme::flushBuffers(MM_EnvironmentVLHGC *env)
 {
 	env->_workStack.flush(env);
-	env->getGCEnvironment()->_referenceObjectBuffer->flush(env);
-	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
+	// OMRTODO env->getGCEnvironment()->_referenceObjectBuffer->flush(env);
+	// OMRTODO env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
 }
 
 

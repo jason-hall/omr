@@ -305,7 +305,7 @@ public:
 	 * @param toObject object being pointed
 	 */
 	MMINLINE bool
-	shouldRememberReferenceForGlobalMark(MM_EnvironmentVLHGC* env, fomrobject_t* fromObject, fomrobject_t* toObject)
+	shouldRememberReferenceForGlobalMark(MM_EnvironmentVLHGC* env, omrobjectptr_t fromObject, omrobjectptr_t toObject)
 	{
 		Assert_MM_true(MM_CycleState::CT_GLOBAL_MARK_PHASE == env->_cycleState->_collectionType);
 		bool shouldRemember = false;

@@ -100,7 +100,7 @@ MM_ParallelSweepVLHGCTask::setup(MM_EnvironmentBase *envBase)
 	env->_sweepVLHGCStats.clear();
 	
 	/* record that this thread is participating in this cycle */
-	env->_sweepVLHGCStats._gcCount = MM_GCExtensionsBase::getExtensions(env)->globalVLHGCStats.gcCount;
+	env->_sweepVLHGCStats._gcCount = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->globalVLHGCStats.gcCount;
 }
 
 /**
@@ -110,7 +110,7 @@ void
 MM_ParallelSweepVLHGCTask::cleanup(MM_EnvironmentBase *envBase)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._sweepStats.merge(&env->_sweepVLHGCStats);
 	if(!env->isMasterThread()) {
@@ -120,9 +120,9 @@ MM_ParallelSweepVLHGCTask::cleanup(MM_EnvironmentBase *envBase)
 	Trc_MM_ParallelSweepVLHGCTask_parallelStats(
 		env->getLanguageVMThread(),
 		(U_32)env->getSlaveID(), 
-		(U_32)j9time_hires_delta(0, env->_sweepVLHGCStats.idleTime, J9PORT_TIME_DELTA_IN_MILLISECONDS), 
+		(U_32)omrtime_hires_delta(0, env->_sweepVLHGCStats.idleTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS), 
 		env->_sweepVLHGCStats.sweepChunksProcessed, 
-		(U_32)j9time_hires_delta(0, env->_sweepVLHGCStats.mergeTime, J9PORT_TIME_DELTA_IN_MILLISECONDS));
+		(U_32)omrtime_hires_delta(0, env->_sweepVLHGCStats.mergeTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS));
 }
 
 void
@@ -148,10 +148,10 @@ void
 MM_ParallelSweepVLHGCTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, const char *id)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	U_64 startTime = j9time_hires_clock();
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	U_64 startTime = omrtime_hires_clock();
 	MM_ParallelTask::synchronizeGCThreads(env, id);
-	U_64 endTime = j9time_hires_clock();
+	U_64 endTime = omrtime_hires_clock();
 	env->_sweepVLHGCStats.addToIdleTime(startTime, endTime);
 }
 
@@ -162,10 +162,10 @@ bool
 MM_ParallelSweepVLHGCTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *envBase, const char *id)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	U_64 startTime = j9time_hires_clock();
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	U_64 startTime = omrtime_hires_clock();
 	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
-	U_64 endTime = j9time_hires_clock();
+	U_64 endTime = omrtime_hires_clock();
 	env->_sweepVLHGCStats.addToIdleTime(startTime, endTime);
 	
 	return result;
@@ -175,10 +175,10 @@ bool
 MM_ParallelSweepVLHGCTask::synchronizeGCThreadsAndReleaseSingleThread(MM_EnvironmentBase *envBase, const char *id)
 {
 	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	U_64 startTime = j9time_hires_clock();
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+	U_64 startTime = omrtime_hires_clock();
 	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseSingleThread(env, id);
-	U_64 endTime = j9time_hires_clock();
+	U_64 endTime = omrtime_hires_clock();
 	env->_sweepVLHGCStats.addToIdleTime(startTime, endTime);
 
 	return result;
@@ -187,7 +187,7 @@ MM_ParallelSweepVLHGCTask::synchronizeGCThreadsAndReleaseSingleThread(MM_Environ
 
 MM_ParallelSweepSchemeVLHGC::MM_ParallelSweepSchemeVLHGC(MM_EnvironmentVLHGC *env)
 	: _chunksPrepared(0)
-	, _extensions(MM_GCExtensionsBase::getExtensions(env))
+	, _extensions(MM_GCExtensionsBase::getExtensions(env->getOmrVM()))
 	, _dispatcher(_extensions->dispatcher)
 	, _cycleState()
 	, _currentSweepBits(NULL)
@@ -280,11 +280,11 @@ MM_ParallelSweepSchemeVLHGC::tearDown(MM_EnvironmentVLHGC *env)
 void *
 MM_ParallelSweepSchemeVLHGC::createSweepPoolState(MM_EnvironmentBase *env, MM_MemoryPool *memoryPool)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	omrthread_monitor_enter(_mutexSweepPoolState);
 	if (NULL == _poolSweepPoolState) {
-		_poolSweepPoolState = pool_new(sizeof(MM_SweepPoolState), 0, 2 * sizeof(UDATA), 0, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_MM, POOL_FOR_PORT(PORTLIB));
+		_poolSweepPoolState = pool_new(sizeof(MM_SweepPoolState), 0, 2 * sizeof(UDATA), 0, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_MM, POOL_FOR_PORT(OMRPORTLIB));
 		if (NULL == _poolSweepPoolState) {
 			omrthread_monitor_exit(_mutexSweepPoolState);
 			return NULL;
@@ -465,11 +465,11 @@ MM_ParallelSweepSchemeVLHGC::measureAllDarkMatter(MM_EnvironmentVLHGC *env, MM_P
 	 * know if it will be part of a real free entry or not
 	 */
 	UDATA sumOfHoleSizes = 0;
-	fomrobject_t *prevObject = markedObjectIterator.nextObject();
+	omrobjectptr_t prevObject = markedObjectIterator.nextObject();
 	if (NULL != prevObject) {
 		UDATA prevObjectSize = _extensions->objectModel.getConsumedSizeInBytesWithHeader(prevObject);
 		
-		fomrobject_t *object = NULL;
+		omrobjectptr_t object = NULL;
 		while (NULL != (object = markedObjectIterator.nextObject())) {
 			UDATA holeSize = (UDATA)object - ((UDATA)prevObject + prevObjectSize);
 			if (holeSize < minimumFreeEntrySize) {
@@ -497,7 +497,7 @@ MM_ParallelSweepSchemeVLHGC::performSamplingCalculations(MM_ParallelSweepChunk *
 	/* Hole at the beginning of the sample is not considered, since we do not know 
 	 * if that's part of a preceding object or part of hole.
 	 */
-	fomrobject_t *prevObject = markedObjectIterator.nextObject();
+	omrobjectptr_t prevObject = markedObjectIterator.nextObject();
 	Assert_MM_true(NULL != prevObject);
 	UDATA prevObjectSize = _extensions->objectModel.getConsumedSizeInBytesWithHeader(prevObject);
 	/* Any object we visit for dark matter estimate, we'll consider for other estimates too (for example scannable vs non-scannable ratio) */
@@ -507,7 +507,7 @@ MM_ParallelSweepSchemeVLHGC::performSamplingCalculations(MM_ParallelSweepChunk *
 		sweepChunk->_scannableBytes += prevObjectSize;
 	}
 
-	fomrobject_t *object = NULL;
+	omrobjectptr_t object = NULL;
 	while (NULL != (object = markedObjectIterator.nextObject())) {
 		UDATA holeSize = (UDATA)object - ((UDATA)prevObject + prevObjectSize);
 		Assert_MM_true(holeSize < minimumFreeEntrySize);
@@ -530,7 +530,7 @@ MM_ParallelSweepSchemeVLHGC::performSamplingCalculations(MM_ParallelSweepChunk *
 	if (startSearchAt < endSearchAt) {
 		while ( startSearchAt < endSearchAt ) {
 			MM_HeapMapWordIterator nextMarkedObjectIterator(_cycleState._markMap, startSearchAt);
-			fomrobject_t *nextObject = nextMarkedObjectIterator.nextObject();
+			omrobjectptr_t nextObject = nextMarkedObjectIterator.nextObject();
 			if (NULL != nextObject) {
 				UDATA holeSize = (UDATA)nextObject - (UDATA)endOfPrevObject;
 				if (holeSize < minimumFreeEntrySize) {
@@ -880,15 +880,15 @@ MM_ParallelSweepSchemeVLHGC::internalSweep(MM_EnvironmentVLHGC *env)
 	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 		U_64 mergeStartTime, mergeEndTime;
-		PORT_ACCESS_FROM_ENVIRONMENT(env);
+		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 		
-		mergeStartTime = j9time_hires_clock();
+		mergeStartTime = omrtime_hires_clock();
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
 		connectAllChunks(env, _chunksPrepared);
 
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-		mergeEndTime = j9time_hires_clock();
+		mergeEndTime = omrtime_hires_clock();
 		env->_sweepVLHGCStats.addToMergeTime(mergeStartTime, mergeEndTime);
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
@@ -997,7 +997,8 @@ MM_ParallelSweepSchemeVLHGC::recycleFreeRegions(MM_EnvironmentVLHGC *env)
 			/* Try to walk list from this head */
 			while (NULL != (walkRegion = next)) {
 				Assert_MM_true(walkRegion->isArrayletLeaf());
-				fomrobject_t *spineObject = (fomrobject_t *)walkRegion->_allocateData.getSpine();
+#if 0 // OMRTODO spine stuff?
+				omrobjectptr_t spineObject = (omrobjectptr_t)walkRegion->_allocateData.getSpine();
 				next = walkRegion->_allocateData.getNextArrayletLeafRegion();
 				Assert_MM_true( region->isAddressInRegion(spineObject) );
 				if (!_cycleState._markMap->isBitSet(spineObject)) {
@@ -1011,6 +1012,7 @@ MM_ParallelSweepSchemeVLHGC::recycleFreeRegions(MM_EnvironmentVLHGC *env)
 
 					walkRegion->getSubSpace()->recycleRegion(env, walkRegion);
 				}
+#endif
 			}
 #endif /* defined(J9VM_GC_ARRAYLETS) */
 

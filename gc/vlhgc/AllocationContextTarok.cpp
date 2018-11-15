@@ -22,7 +22,6 @@
 
 #include "omr.h"
 #include "omrcfg.h"
-#include ""
 #include "omrgcconsts.h"
 #include "modronopt.h"
 #include "ModronAssertions.h"
@@ -35,5 +34,5 @@ bool
 MM_AllocationContextTarok::shouldMigrateRegionToCommonContext(MM_EnvironmentBase *env, MM_HeapRegionDescriptorVLHGC *region)
 {
 	Assert_MM_true(this == region->_allocateData._owningContext);
-	return region->getLogicalAge() == MM_GCExtensionsBase::getExtensions(env)->tarokRegionMaxAge;
+	return region->getLogicalAge() == MM_GCExtensionsBase::getExtensions(env->getOmrVM())->tarokRegionMaxAge;
 }

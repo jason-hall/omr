@@ -34,6 +34,7 @@
 #include "omr.h"
 #include "omrcfg.h"
 #include "modronbase.h"
+#include "objectdescription.h"
 
 #include "CardCleaner.hpp"
 #include "ParallelTask.hpp"
@@ -74,35 +75,35 @@ private:
 	 * @param env[in] the current thread
 	 * @param objectPtr[in] the object to scan. Must be a non-NULL object on the heap.
 	 */
-	bool scrubObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr);
+	bool scrubObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr);
 
 	/**
 	 * Scrub a SCAN_REFERENCE_MIXED_OBJECT.
 	 * @param env[in] the current thread
 	 * @param objectPtr[in] the object to scan. Must be a non-NULL object on the heap.
 	 */
-	bool scrubMixedObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr);
+	bool scrubMixedObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr);
 
 	/**
 	 * Scrub a SCAN_POINTER_ARRAY_OBJECT.
 	 * @param env[in] the current thread
 	 * @param objectPtr[in] the object to scan. Must be a non-NULL object array on the heap.
 	 */
-	bool scrubPointerArrayObject(MM_EnvironmentVLHGC *env, fomrobject_t *objectPtr);
+	bool scrubPointerArrayObject(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr);
 
 	/**
 	 * Scrub a SCAN_CLASS_OBJECT.
 	 * @param env[in] the current thread
 	 * @param objectPtr[in] the object to scan. Must be a non-NULL class object on the heap.
 	 */
-	// OMRTODO bool scrubClassObject(MM_EnvironmentVLHGC *env, fomrobject_t *classObject);
+	// OMRTODO bool scrubClassObject(MM_EnvironmentVLHGC *env, omrobjectptr_t classObject);
 	
 	/**
 	 * Scrub a SCAN_CLASSLOADER_OBJECT.
 	 * @param env[in] the current thread
 	 * @param objectPtr[in] the object to scan. Must be a non-NULL class loader object on the heap.
 	 */
-	// OMRTODO bool scrubClassLoaderObject(MM_EnvironmentVLHGC *env, fomrobject_t *classLoaderObject);
+	// OMRTODO bool scrubClassLoaderObject(MM_EnvironmentVLHGC *env, omrobjectptr_t classLoaderObject);
 
 	/**
 	 * Given the specified reference from fromObject to toObject, determine if the card can
@@ -112,7 +113,7 @@ private:
 	 * @param toObject[in] an object referenced from fromObject
 	 * @return true if the card may be scrubbed, false if cleaning is required
 	 */
-	bool mayScrubReference(MM_EnvironmentVLHGC *env, fomrobject_t *fromObject, fomrobject_t* toObject);
+	bool mayScrubReference(MM_EnvironmentVLHGC *env, omrobjectptr_t fromObject, omrobjectptr_t toObject);
 	
 	/**
 	 * Scans the marked objects in the [lowAddress..highAddress) range to determine if these objects need to be scanned during
