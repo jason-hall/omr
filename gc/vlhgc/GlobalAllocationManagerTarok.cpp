@@ -66,12 +66,12 @@ MM_GlobalAllocationManagerTarok::shouldIdentifyThreadAsCommon(MM_EnvironmentBase
 	bool result = false;
 	
 	if (_extensions->tarokAttachedThreadsAreCommon) {
-		result = (J9_PRIVATE_FLAGS_ATTACHED_THREAD == ((J9_PRIVATE_FLAGS_ATTACHED_THREAD | J9_PRIVATE_FLAGS_SYSTEM_THREAD) & ((OMR_VMThread *)env->getLanguageVMThread())->privateFlags));
+		// OMRTODO: No direct omr equivalent: result = (J9_PRIVATE_FLAGS_ATTACHED_THREAD == ((J9_PRIVATE_FLAGS_ATTACHED_THREAD | J9_PRIVATE_FLAGS_SYSTEM_THREAD) & ((OMR_VMThread *)env->getLanguageVMThread())->privateFlags));
 	}
 	
 	if (!result) {
 		/* determine if the thread's class matches any of the wildcards specified using -XXgc:numaCommonThreadClass= */
-		fomrobject_t* threadObject = ((OMR_VMThread *)env->getLanguageVMThread())->threadObject;
+		/* OMRTODO fomrobject_t* threadObject = ((OMR_VMThread *)env->getLanguageVMThread())->threadObject;
 		if (NULL != threadObject) {
 			J9Class *threadClass = J9GC_J9OBJECT_CLAZZ(threadObject);
 			J9UTF8* classNameUTF8 = J9ROMCLASS_CLASSNAME(threadClass->romClass);
@@ -80,7 +80,7 @@ MM_GlobalAllocationManagerTarok::shouldIdentifyThreadAsCommon(MM_EnvironmentBase
 				result = wildcard->match((char*)J9UTF8_DATA(classNameUTF8), J9UTF8_LENGTH(classNameUTF8));
 				wildcard = wildcard->_next;
 			}
-		}
+		}*/
 	}
 	
 	return result;
@@ -245,10 +245,10 @@ MM_GlobalAllocationManagerTarok::tearDown(MM_EnvironmentBase *env)
 void
 MM_GlobalAllocationManagerTarok::printAllocationContextStats(MM_EnvironmentBase *env, UDATA eventNum, J9HookInterface** hookInterface)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 	UDATA totalRegionCount = 0;
 	const char *eventName = "     ";
-	J9HookInterface** externalHookInterface = MM_GCExtensionsBase::getExtensions(env)->getOmrHookInterface();
+	J9HookInterface** externalHookInterface = MM_GCExtensionsBase::getExtensions(env->getOmrVM())->getOmrHookInterface();
 	
 	if ((eventNum == J9HOOK_MM_OMR_GLOBAL_GC_START) && (hookInterface == externalHookInterface)) {
 		eventName = "GCSTART";
@@ -266,16 +266,16 @@ MM_GlobalAllocationManagerTarok::printAllocationContextStats(MM_EnvironmentBase 
 		ac->resetThreadCount();
 	}	
 
-	GC_VMThreadListIterator threadIterator((OMR_VM *)env->getLanguageVM());
+	GC_OMRVMThreadListIterator threadIterator(env->getOmrVM());
 	OMR_VMThread * walkThread = NULL;
-	while (NULL != (walkThread = threadIterator.nextVMThread())) {
-		MM_EnvironmentBase *envThread = MM_EnvironmentBase::getEnvironment(walkThread->omrVMThread);
+	while (NULL != (walkThread = threadIterator.nextOMRVMThread())) {
+		MM_EnvironmentBase *envThread = MM_EnvironmentBase::getEnvironment(walkThread);
 		if ((envThread->getThreadType() == MUTATOR_THREAD)) {
 			((MM_AllocationContextTarok *)envThread->getAllocationContext())->incThreadCount();
 		}
 	}
 	
-	GC_HeapRegionIteratorVLHGC regionIterator(MM_GCExtensionsBase::getExtensions(env)->heapRegionManager);
+	GC_HeapRegionIteratorVLHGC regionIterator(MM_GCExtensionsBase::getExtensions(env->getOmrVM())->heapRegionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	while (NULL != (region = regionIterator.nextRegion())) {
 		if (NULL != region->getMemoryPool()) {
@@ -293,13 +293,13 @@ MM_GlobalAllocationManagerTarok::printAllocationContextStats(MM_EnvironmentBase 
 		UDATA foreignCount = 0;
 		ac->getRegionCount(&localCount, &foreignCount);
 
-		j9tty_printf(PORTLIB, "AC %3d %s MPAOL regionCount %5d (AO %5d AO_IDLE %5d AO_MARKED %5d) mutatorCount %3d numaNode %d (%d local, %d foreign)\n",
+		omrtty_printf("AC %3d %s MPAOL regionCount %5d (AO %5d AO_IDLE %5d AO_MARKED %5d) mutatorCount %3d numaNode %d (%d local, %d foreign)\n",
 				i, eventName, acRegionCount, ac->getRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED),
 				ac->getRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED_IDLE), ac->getRegionCount(MM_HeapRegionDescriptor::BUMP_ALLOCATED_MARKED),
 				ac->getThreadCount(), ac->getNumaNode(), localCount, foreignCount);
 	}
 
-	j9tty_printf(PORTLIB, "AC sum %s MPAOL regionCount %5d (total %d) \n", eventName, totalRegionCount, MM_GCExtensionsBase::getExtensions(env)->heapRegionManager->getTableRegionCount());
+	omrtty_printf("AC sum %s MPAOL regionCount %5d (total %d) \n", eventName, totalRegionCount, MM_GCExtensionsBase::getExtensions(env->getOmrVM())->heapRegionManager->getTableRegionCount());
 }
 
 UDATA

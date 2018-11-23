@@ -42,6 +42,34 @@
 extern "C" {
 #endif
 
+
+/* ---------------- wildcard.c ---------------- */
+
+/**
+* @brief
+* @param pattern
+* @param patternLength
+* @param needle
+* @param needleLength
+* @param matchFlag
+* @return IDATA
+*/
+IDATA
+parseWildcard(const char * pattern, UDATA patternLength, const char** needle, UDATA* needleLength, U_32 * matchFlag);
+
+
+/**
+* @brief
+* @param matchFlag
+* @param needle
+* @param needleLength
+* @param haystack
+* @param haystackLength
+* @return IDATA
+*/
+IDATA
+wildcardMatch(U_32 matchFlag, const char* needle, UDATA needleLength, const char* haystack, UDATA haystackLength);
+
 #if defined(J9ZOS390)
 #pragma map(getdsa, "GETDSA")
 /* ----------------- omrgetdsa.s ---------------- */

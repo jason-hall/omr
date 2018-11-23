@@ -86,7 +86,7 @@ MM_ConfigurationIncrementalGenerational::createGlobalCollector(MM_EnvironmentBas
 MM_Heap *
 MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBase *env, UDATA heapBytesRequested, MM_HeapRegionManager *regionManager)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 	
 	MM_Heap *heap = MM_HeapVirtualMemory::newInstance(env, extensions->heapAlignment, heapBytesRequested, regionManager);
 	if (NULL != heap) {
@@ -120,19 +120,19 @@ MM_ConfigurationIncrementalGenerational::allocateNewEnvironment(MM_GCExtensionsB
 J9Pool *
 MM_ConfigurationIncrementalGenerational::createEnvironmentPool(MM_EnvironmentBase *env)
 {
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	uintptr_t numberOfElements = getConfigurationDelegate()->getInitialNumberOfPooledEnvironments(env);
 	/* number of elements, pool flags = 0, 0 selects default pool configuration (at least 1 element, puddle size rounded to OS page size) */
-	return pool_new(sizeof(MM_EnvironmentVLHGC), numberOfElements, sizeof(U_64), 0, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_MM, POOL_FOR_PORT(PORTLIB));
+	return pool_new(sizeof(MM_EnvironmentVLHGC), numberOfElements, sizeof(U_64), 0, OMR_GET_CALLSITE(), OMRMEM_CATEGORY_MM, POOL_FOR_PORT(OMRPORTLIB));
 }
 
 bool
 MM_ConfigurationIncrementalGenerational::initializeEnvironment(MM_EnvironmentBase *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
-	OMR_VMThread *vmThread = (OMR_VMThread *)env->getLanguageVMThread();
-	OMR_VM *omrVM = env->getOmrVM();
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
+	// OMRTODO OMR_VMThread *vmThread = (OMR_VMThread *)env->getLanguageVMThread();
+	// OMR_VM *omrVM = env->getOmrVM();
 
 	if (!MM_Configuration::initializeEnvironment(env)) {
 		return false;
@@ -143,8 +143,8 @@ MM_ConfigurationIncrementalGenerational::initializeEnvironment(MM_EnvironmentBas
 		return false;
 	}
 
-	vmThread->cardTableVirtualStart = (U_8 *)j9gc_incrementalUpdate_getCardTableVirtualStart(omrVM);
-	vmThread->cardTableShiftSize = j9gc_incrementalUpdate_getCardTableShiftValue(omrVM);
+	/* OMRTODO: What is this? vmThread->cardTableVirtualStart = (U_8 *)j9gc_incrementalUpdate_getCardTableVirtualStart(omrVM);
+	vmThread->cardTableShiftSize = j9gc_incrementalUpdate_getCardTableShiftValue(omrVM);*/
 
 	return true;
 }
@@ -152,7 +152,7 @@ MM_ConfigurationIncrementalGenerational::initializeEnvironment(MM_EnvironmentBas
 MM_MemorySpace *
 MM_ConfigurationIncrementalGenerational::createDefaultMemorySpace(MM_EnvironmentBase *env, MM_Heap *heap, MM_InitializationParameters *parameters)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 
 	MM_HeapRegionManager *regionManager = extensions->heapRegionManager;
 	Assert_MM_true(NULL != regionManager);
@@ -222,7 +222,7 @@ MM_ConfigurationIncrementalGenerational::defaultMemorySpaceAllocated(MM_GCExtens
 bool
 MM_ConfigurationIncrementalGenerational::initialize(MM_EnvironmentBase *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 
 	bool result = MM_Configuration::initialize(env);
 
@@ -265,7 +265,7 @@ MM_ConfigurationIncrementalGenerational::initialize(MM_EnvironmentBase *env)
 void
 MM_ConfigurationIncrementalGenerational::tearDown(MM_EnvironmentBase *env)
 {
-	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env);
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(env->getOmrVM());
 
 	if (NULL != extensions->sweepPoolManagerBumpPointer) {
 		extensions->sweepPoolManagerBumpPointer->kill(env);

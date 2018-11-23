@@ -27,6 +27,7 @@
 //#include "j2sever.h"
 #include "modronopt.h"
 #include "ModronAssertions.h"
+#include "thrtypes.h"
 
 #include <string.h>
 
@@ -73,6 +74,7 @@
 #include "HeapRegionIteratorVLHGC.hpp"
 #include "HeapRegionManager.hpp"
 #include "InterRegionRememberedSet.hpp"
+#include "MixedObjectIterator.hpp" // OMRTODO: Remove
 #include "MarkMap.hpp"
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
@@ -83,12 +85,14 @@
 #include "ObjectModel.hpp"
 #include "PacketSlotIterator.hpp"
 #include "ParallelTask.hpp"
+#include "PointerArrayIterator.hpp" // OMRTODO: Remove?
 // OMRTODO #include "ReferenceObjectBuffer.hpp"
 // OMRTODO #include "ReferenceObjectList.hpp"
 #include "ReferenceStats.hpp"
 #include "RegionBasedOverflowVLHGC.hpp"
 #include "RootScanner.hpp"
-// OMRTODO #include "ScavengerForwardedHeader.hpp"
+// OMRTODO: fix this thing up:
+#include "ScavengerForwardedHeader.hpp"
 #include "SlotObject.hpp"
 #include "StackSlotValidator.hpp"
 #include "SublistFragment.hpp"
@@ -786,14 +790,23 @@ MM_CopyForwardScheme::isObjectInNurseryMemory(omrobjectptr_t objectPtr)
 	return result;
 }
 
+/* OMRTODO
+ * This function seems to be the same as ObjectModelDelegate.cpp :: calculateObjectDetailsForCopy except for the check of
+ * forwardedHeader->hasBeenHashed()/hasBeenMoved(). Those functions in MM_ScavengerForwardedHeader, used only in VLHGC, are essentially
+ * the only difference from OMR's MM_ForwardedHeader. Those classes seem to be mergable or it can be changed to a subclass.
+ *
+ * This function can be changed to call ObjectModelDelegate's calculateObjectDetailsForCopy and call he hasBeenHashed()/Moved() stuff.
+ * ScavengerForwardedHeader can be merged with or a subclass of ForwardedHeader. Then this would have no java-specific stuff as it would be in glue.
+ */
 MMINLINE void
 MM_CopyForwardScheme::calculateObjectDetailsForCopy(MM_ScavengerForwardedHeader* forwardedHeader, UDATA *objectCopySizeInBytes, UDATA *objectReserveSizeInBytes, bool *doesObjectNeedHash, bool *isObjectGrowingHashSlot)
 {
+#if 0 // OMRTODO: See above notes.
 	/* NOTE: the size is fetched by hand from the class in the mixed case because a forwarding pointer could have been substituted into the clazz slot.
 	 * the class pointer passed into this routine is guaranteed to have been checked
 	 */
 	UDATA actualObjectCopySizeInBytes = 0;
-	/*OMRTODO J9Class* clazz = forwardedHeader->getPreservedClass();
+	OMRTODO J9Class* clazz = forwardedHeader->getPreservedClass();
 	UDATA hashcodeOffset = 0;
 
 	if(forwardedHeader->isIndexable()) {
@@ -805,13 +818,13 @@ MM_CopyForwardScheme::calculateObjectDetailsForCopy(MM_ScavengerForwardedHeader*
 	} else {
 		*objectCopySizeInBytes = clazz->totalInstanceSize + sizeof(fomrobject_t);
 		hashcodeOffset = _extensions->mixedObjectModel.getHashcodeOffset(clazz);
-	}*/
+	}
 
 	/* IF the object has been hashed and has not been moved, then we need generate hash from the old address */
 	*doesObjectNeedHash = (forwardedHeader->hasBeenHashed() && !forwardedHeader->hasBeenMoved());
 	*isObjectGrowingHashSlot = false;
 	
-	// OMRTODO if (hashcodeOffset == *objectCopySizeInBytes) {
+	if (hashcodeOffset == *objectCopySizeInBytes) {
 		if (forwardedHeader->hasBeenMoved()) {
 			*objectCopySizeInBytes += sizeof(UDATA);
 		} else if (forwardedHeader->hasBeenHashed()) {
@@ -819,9 +832,10 @@ MM_CopyForwardScheme::calculateObjectDetailsForCopy(MM_ScavengerForwardedHeader*
 			/* IF the object has been hashed and has not been moved and hashcodeOffset point to end of the object, need to grow size for hash slot  */
 			*isObjectGrowingHashSlot = true;
 		}
-	//}
+	}
 	actualObjectCopySizeInBytes += *objectCopySizeInBytes;
 	*objectReserveSizeInBytes = _extensions->objectModel.adjustSizeInBytes(actualObjectCopySizeInBytes);
+#endif
 }
 
 MMINLINE void
@@ -1455,7 +1469,7 @@ MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationCont
 }
 
 MMINLINE bool
-MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr, volatile omrobjectptr_t slot)
+MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr, volatile omrobjectptr_t *slot)
 {
 	bool success = copyAndForward(env, reservingContext, slot);
 
@@ -2115,7 +2129,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 					UDATA hashOffset = forwardedHeader->getHashcodeOffset(_omrVM, destinationObjectPtr);
 					U_32 *hashCodePointer = (U_32*)((U_8*)destinationObjectPtr + hashOffset);
 					*hashCodePointer = forwardedHeader->computeObjectHash((OMR_VMThread*)env->getLanguageVMThread());
-					_extensions->objectModel.setObjectHasBeenMoved(destinationObjectPtr);
+					// OMRTODO: ? _extensions->objectModel.setObjectHasBeenMoved(destinationObjectPtr);
 				}
 
 				/* Update any mark maps and transfer card table data as appropriate for a successful copy */
@@ -3074,8 +3088,8 @@ MM_CopyForwardScheme::incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *e
 	bool hasPartiallyScannedObject, MM_CopyScanCacheVLHGC** nextScanCache)
 {
 	GC_MixedObjectIterator mixedObjectIterator(_omrVM);
-	omrobjectptr_t referentPtr = &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr);
-	bool referentMustBeMarked = false;
+	// OMRTODO omrobjectptr_t referentPtr = &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr);
+	// bool referentMustBeMarked = false;
 
 	if (!hasPartiallyScannedObject) {
 		/* finished previous object, step up for next one */
@@ -3085,7 +3099,7 @@ MM_CopyForwardScheme::incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *e
 		mixedObjectIterator.restore(&(scanCache->_objectIteratorState));
 	}
 
-#if 0
+#if 0 // OMRTODO
 	if (J9_JAVA_CLASS_REFERENCE_SOFT == (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9_JAVA_CLASS_REFERENCE_MASK)) {
 		/* Object is a Soft Reference: mark it if not expired */
 		U_32 age = J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr);
@@ -3096,7 +3110,7 @@ MM_CopyForwardScheme::incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *e
 	GC_SlotObject *slotObject;
 	bool success = true;
 	while (success && ((slotObject = mixedObjectIterator.nextSlot()) != NULL)) {
-		if (((omrobjectptr_t)slotObject->readAddressFromSlot() != referentPtr) || referentMustBeMarked) {
+		// OMRTODO if (((omrobjectptr_t)slotObject->readAddressFromSlot() != referentPtr) || referentMustBeMarked) {
 			/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
 			success = copyAndForward(env, reservingContext, objectPtr, slotObject);
 
@@ -3106,7 +3120,7 @@ MM_CopyForwardScheme::incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *e
 				mixedObjectIterator.save(&(scanCache->_objectIteratorState));
 				return true;
 			}
-		}
+		//}
 	}
 
 	return false;
@@ -3325,10 +3339,10 @@ MM_CopyForwardScheme::completeScan(MM_EnvironmentVLHGC *env)
 MMINLINE void
 MM_CopyForwardScheme::addOwnableSynchronizerObjectInList(MM_EnvironmentVLHGC *env, omrobjectptr_t object)
 {
-	if (NULL != _extensions->accessBarrier->isObjectInOwnableSynchronizerList(object)) {
-		env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->add(env, object);
+	// OMRTODO if (NULL != _extensions->accessBarrier->isObjectInOwnableSynchronizerList(object)) {
+	//	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->add(env, object);
 		env->_copyForwardStats._ownableSynchronizerSurvived += 1;
-	}
+	//}
 }
 
 #if defined(J9VM_GC_FINALIZATION)
@@ -3635,7 +3649,7 @@ private:
 		if (NULL != *slotPtr) {
 			/* we don't have the context of this slot so just relocate the object into the same node where we found it */
 			MM_AllocationContextTarok *reservingContext = _copyForwardScheme->getContextForHeapAddress(*slotPtr);
-			_copyForwardScheme->copyAndForward(MM_EnvironmentVLHGC::getEnvironment(_env->getOmrVM()), reservingContext, slotPtr);
+			_copyForwardScheme->copyAndForward(MM_EnvironmentVLHGC::getEnvironment(_env), reservingContext, slotPtr);
 		}
 	}
 
@@ -3644,9 +3658,9 @@ private:
 			/* heap object - validate and mark */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(_env));
 			/* we know that threads are bound to nodes so relocalize this object into the node of the thread which directly references it */
-			OMR_VMThread *thread = ((J9StackWalkState *)walkState)->currentThread;
+			/* OMRTODO: No J9StackWalkState? OMR_VMThread *thread = ((J9StackWalkState *)walkState)->currentThread;
 			MM_AllocationContextTarok *reservingContext = (MM_AllocationContextTarok *)MM_EnvironmentVLHGC::getEnvironment(thread)->getAllocationContext();
-			_copyForwardScheme->copyAndForward(MM_EnvironmentVLHGC::getEnvironment(_env), reservingContext, slotPtr);
+			_copyForwardScheme->copyAndForward(MM_EnvironmentVLHGC::getEnvironment(_env), reservingContext, slotPtr);*/
 		} else if (NULL != *slotPtr) {
 			/* stack object - just validate */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(_env));
@@ -3660,7 +3674,7 @@ private:
 			MM_AllocationContextTarok *reservingContext = (MM_AllocationContextTarok *)MM_EnvironmentVLHGC::getEnvironment(thread)->getAllocationContext();
 			_copyForwardScheme->copyAndForward(MM_EnvironmentVLHGC::getEnvironment(_env), reservingContext, slotPtr);
 		} else if (NULL != *slotPtr) {
-			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
+			// OMRTODO Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
 		}
 	}
 
@@ -3732,11 +3746,11 @@ public:
 #if defined(J9VM_GC_FINALIZATION)
 		scanFinalizableObjects(env);
 #endif /* J9VM_GC_FINALIZATION */
-		scanJNIGlobalReferences(env);
+		/* OMRTODO scanJNIGlobalReferences(env);
 
 		if(_stringTableAsRoot){
 			scanStringTable(env);
-		}
+		}*/
 	}
 };
 
@@ -3840,8 +3854,7 @@ private:
 		return complete_phase_OK;
 	}
 
-	virtual void doMonitorReference(fomrobject_tMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator) {
-		J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
+	virtual void doMonitorReference(omrthread_monitor_t monitor, GC_HashTableIterator *monitorReferenceIterator) {
 		omrobjectptr_t objectPtr = (omrobjectptr_t)monitor->userData;
 		if(!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
@@ -3855,15 +3868,15 @@ private:
 				/* We must call objectMonitorDestroy (as opposed to omrthread_monitor_destroy) when the
 				 * monitor is not internal to the GC
 				 */
-				static_cast<OMR_VM*>(_omrVM->_language_vm)->internalVMFunctions->objectMonitorDestroy(static_cast<OMR_VM*>(_omrVM->_language_vm), (OMR_VMThread *)_env->getLanguageVMThread(), (omrthread_monitor_t)monitor);
+				omrthread_monitor_destroy(monitor);
 			}
 		}
 	}
 
 	virtual CompletePhaseCode scanMonitorReferencesComplete(MM_EnvironmentBase *envBase) {
-		MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
+		// OMRTODO MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 		reportScanningStarted(RootScannerEntity_MonitorReferenceObjectsComplete);
-		((OMR_VM *)env->getLanguageVM())->internalVMFunctions->objectMonitorDestroyComplete((OMR_VM *)env->getLanguageVM(), (OMR_VMThread *)env->getLanguageVMThread());
+		// OMRTODO ((OMR_VM *)env->getLanguageVM())->internalVMFunctions->objectMonitorDestroyComplete((OMR_VM *)env->getLanguageVM(), (OMR_VMThread *)env->getLanguageVMThread());
 		reportScanningEnded(RootScannerEntity_MonitorReferenceObjectsComplete);
 		return complete_phase_OK;
 	}
@@ -3877,7 +3890,7 @@ private:
 		}
 	}
 
-	virtual void doStringTableSlot(omrobjectptr_t *slotPtr, GC_StringTableIterator *stringTableIterator) {
+	/* OMRTODO virtual void doStringTableSlot(omrobjectptr_t *slotPtr, GC_StringTableIterator *stringTableIterator) {
 		omrobjectptr_t objectPtr = *slotPtr;
 		MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._stringConstantsCandidates += 1;
 		if(!_copyForwardScheme->isLiveObject(objectPtr)) {
@@ -3885,14 +3898,14 @@ private:
 			MM_ScavengerForwardedHeader forwardedHeader(objectPtr);
 			objectPtr = forwardedHeader.getForwardedObject();
 			if(NULL == objectPtr) {
-				//OMRTODO Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
+				OMRTODO Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
 				MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._stringConstantsCleared += 1;
 				stringTableIterator->removeSlot();
 			} else {
 				*slotPtr = objectPtr;
 			}
 		}
-	}
+	}*/
 
 	/**
 	 * @Clear the string table cache slot if the object is not marked
@@ -4104,7 +4117,7 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 		completeScan(env);
 	}
 	/* ensure that all buffers have been flushed before we start reference processing */
-	env->getGCEnvironment()->_referenceObjectBuffer->flush(env);
+	// OMRTODO env->getGCEnvironment()->_referenceObjectBuffer->flush(env);
 	
 	if(env->_currentTask->synchronizeGCThreadsAndReleaseSingleThread(env, UNIQUE_ID)) {
 		_clearableProcessingStarted = true;
@@ -4128,7 +4141,7 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 	}
 
 	MM_CopyForwardSchemeRootClearer rootClearer(env, this);
-	rootClearer.setStringTableAsRoot(!isCollectStringConstantsEnabled());
+	// OMRTODO rootClearer.setStringTableAsRoot(!isCollectStringConstantsEnabled());
 	rootClearer.scanClearable(env);
 
 	/* Clearable must not uncover any new work */
@@ -4150,7 +4163,7 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 	env->_workStack.flush(env);
 	/* flush the buffer after clearable phase --- cmvc 198798 */
 	/* flush ownable synchronizer object buffer after rebuild the ownableSynchronizerObjectList during main scan phase */
-	env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
+	// OMRTODO env->getGCEnvironment()->_ownableSynchronizerObjectBuffer->flush(env);
 
 	/* No matter what happens, always sum up the gc stats */
 	mergeGCStats(env);
@@ -4164,7 +4177,7 @@ void
 MM_CopyForwardScheme::scanRoots(MM_EnvironmentVLHGC* env)
 {
 	MM_CopyForwardSchemeRootScanner rootScanner(env, this);
-	rootScanner.setStringTableAsRoot(!isCollectStringConstantsEnabled());
+	// OMRTODO rootScanner.setStringTableAsRoot(!isCollectStringConstantsEnabled());
 	// OMRTODO rootScanner.setClassDataAsRoots(!isDynamicClassUnloadingEnabled());
 	// rootScanner.setIncludeStackFrameClassReferences(isDynamicClassUnloadingEnabled());
 
@@ -4329,10 +4342,10 @@ private:
 	virtual void doVMThreadSlot(omrobjectptr_t *slotPtr, GC_VMThreadIterator *vmThreadIterator) {
 		if (_copyForwardScheme->isHeapObject(*slotPtr)) {
 			verifyObject(slotPtr);
-			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(*slotPtr));
+			// OMRTODO Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(*slotPtr));
 		} else if (NULL != *slotPtr) {
-			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
-			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(*slotPtr));
+			// OMRTODO Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
+			// OMRTODO Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(*slotPtr));
 		}
 	}
 
@@ -4416,7 +4429,7 @@ MM_CopyForwardScheme::verifyCopyForwardResult(MM_EnvironmentVLHGC *env)
 
 	while(NULL != (region = regionIterator.nextRegion())) {
 		if(region->isArrayletLeaf()) {
-			omrobjectptr_t spineObject = (omrobjectptr_t)region->_allocateData.getSpine();
+			omrobjectptr_t spineObject = NULL; // OMRTODO (omrobjectptr_t)region->_allocateData.getSpine();
 			Assert_MM_true(NULL != spineObject);
 			/* the spine must be marked if it was copied as a live object or if we aborted the copy-forward */
 			/* otherwise, it must not be forwarded (since that would imply that the spine survived but the pointer wasn't updated) */
@@ -4537,11 +4550,12 @@ MM_CopyForwardScheme::verifyMixedObjectSlots(MM_EnvironmentVLHGC *env, omrobject
 	}
 }
 
+// OMROTODO: This only used in java-specific stuff
 void
 MM_CopyForwardScheme::verifyReferenceObjectSlots(MM_EnvironmentVLHGC *env, omrobjectptr_t objectPtr)
 {
-	omrobjectptr_t referentToken = J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr);
-	omrobjectptr_t referentPtr = _extensions->accessBarrier->convertPointerFromToken(referentToken);
+	// OMRTODO omrobjectptr_t referentToken = J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr);
+	omrobjectptr_t referentPtr = NULL; // OMRTODO _extensions->accessBarrier->convertPointerFromToken(referentToken);
 	if(!_abortInProgress && verifyIsPointerInEvacute(env, referentPtr)) {
 		OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
 		omrtty_printf("RefMixed referent slot points to evacuate!  srcObj %p dstObj %p\n", objectPtr, referentPtr);

@@ -771,7 +771,7 @@ private:
 	 * @param slotObject the slot to be copied or updated
 	 * @return true if copy succeeded (or no copying was involved)
 	 */
-	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr, volatile omrobjectptr_t slot);
+	MMINLINE bool copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, omrobjectptr_t objectPtr, volatile omrobjectptr_t *slot);
 
 	/**
 	 * Update the given slot to point at the new location of the object, after copying the object if it was not already.
