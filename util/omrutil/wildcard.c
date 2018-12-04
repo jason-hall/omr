@@ -26,7 +26,7 @@
 #include "omrcfg.h"
 // OMRTODO #include "j9protos.h"
 // #include "util_internal.h"
-// #include "ut_j9util.h"
+#include "ut_j9util.h"
 
 #define WILDCARD_CHARACTER '*'
 
@@ -47,7 +47,7 @@
 IDATA
 parseWildcard(const char * pattern, UDATA patternLength, const char** needle, UDATA* needleLength, U_32 * matchFlag)
 {
-	IDATA rc = 0;
+	// OMRTODO: ? IDATA rc = 0;
 	const char *str;
 
 	Trc_Util_parseWildcard_Entry(patternLength, pattern);
