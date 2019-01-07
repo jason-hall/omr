@@ -33,12 +33,6 @@
  */
 class MM_MetronomeStats : public MM_Base {
 public:
-	uintptr_t classLoaderUnloadedCount;
-	uintptr_t classesUnloadedCount;
-	uintptr_t anonymousClassesUnloadedCount;
-
-	uintptr_t finalizableCount; /**< count of objects pushed for finalization during one quantum */
-
 	uintptr_t _workPacketOverflowCount; /**< count of work packets overflowed since the end of the last quantum */
 	uintptr_t _objectOverflowCount; /**< count of single objects that are overflowed since the last quantum */
 
@@ -55,10 +49,6 @@ public:
 	 */
 	void clearStart()
 	{
-		classLoaderUnloadedCount = 0;
-		classesUnloadedCount = 0;
-		anonymousClassesUnloadedCount = 0;
-		finalizableCount = 0;
 	}
 
 	/**
@@ -101,10 +91,6 @@ public:
 	 */
 	MM_MetronomeStats()
 		: MM_Base()
-		, classLoaderUnloadedCount(0)
-		, classesUnloadedCount(0)
-		, anonymousClassesUnloadedCount(0)
-		, finalizableCount(0)
 		, _workPacketOverflowCount(0)
 		, _objectOverflowCount(0)
 		, nonDeterministicSweepCount(0)
