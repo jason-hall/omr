@@ -760,6 +760,9 @@ public:
 	MUTEX memcheckHashTableMutex;
 #endif /* defined(OMR_VALGRIND_MEMCHECK) */
 
+	uintptr_t maxSoftReferenceAge; /**< The fixed age specified as the soft reference threshold which acts as our baseline for the dynamicMaxSoftReferenceAge */
+	uintptr_t dynamicMaxSoftReferenceAge; /**< The age which represents the clearing age of soft references for a globalGC cycle.  At the end of a GC cycle, it will be updated for the following cycle by taking the percentage of free heap in the oldest generation as a fraction of the maxSoftReferenceAge */
+
 	/* Function Members */
 private:
 
@@ -1224,6 +1227,15 @@ public:
 #endif /* defined(OMR_GC_CONCURRENT_SCAVENGER) */
 	}
 
+	MMINLINE uintptr_t getDynamicMaxSoftReferenceAge()
+	{
+		return dynamicMaxSoftReferenceAge;
+	}
+
+	MMINLINE uintptr_t getMaxSoftReferenceAge()
+	{
+		return maxSoftReferenceAge;
+	}
 
 	MM_GCExtensionsBase()
 		: MM_BaseVirtual()
@@ -1678,6 +1690,8 @@ public:
 		, valgrindMempoolAddr(0)
 		, memcheckHashTable(NULL)
 #endif /* defined(OMR_VALGRIND_MEMCHECK) */
+		, maxSoftReferenceAge(32)
+		, dynamicMaxSoftReferenceAge(maxSoftReferenceAge)
 	{
 		_typeId = __FUNCTION__;
 	}
