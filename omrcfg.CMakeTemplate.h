@@ -138,6 +138,7 @@
 #cmakedefine OMR_ENV_LITTLE_ENDIAN
 #cmakedefine OMR_GC_ARRAYLETS
 #cmakedefine OMR_GC_COMPRESSED_POINTERS
+#cmakedefine OMR_GC_DYNAMIC_CLASS_UNLOADING
 #cmakedefine OMR_GC_HYBRID_ARRAYLETS
 #cmakedefine OMR_GC_OBJECT_MAP
 #cmakedefine OMR_GC_REALTIME
