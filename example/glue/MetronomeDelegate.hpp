@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,28 +20,37 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if !defined(REALTIMEGCDELEGATE_HPP_)
-#define REALTIMEGCDELEGATE_HPP_
+#if !defined(METRONOMEDELEGATE_HPP_)
+#define METRONOMEDELEGATE_HPP_
 
-#include "omrcfg.h"
-#if defined(OMR_GC_REALTIME)
 #include "omr.h"
-#include "EnvironmentRealtime.hpp"
+#include "omrcfg.h"
 
-class MM_RealtimeGCDelegate
+#if defined(OMR_GC_REALTIME)
+
+#include "BaseNonVirtual.hpp"
+#include "EnvironmentBase.hpp"
+#include "EnvironmentRealtime.hpp"
+#include "GCExtensionsBase"
+
+class MM_MetronomeDelegate : public MM_BaseNonVirtual
 {
 private:
-	OMR_VM *_vm;
 	MM_GCExtensionsBase *_extensions;
-	MM_RealtimeGC *_realtimeGC;
-
 public:
-	MM_RealtimeGCDelegate(MM_EnvironmentBase *env, MM_RealtimeGC *realtimeGC) :
-		_vm(env->getOmrVM()),
-		_extensions(env->getExtensions()),
-		_realtimeGC(realtimeGC) {}
+	MM_MetronomeDelegate(GCExtensionsBase *extensions) :
+		_extensions(extensions) {}
+
+	static void yieldWhenRequested(MM_EnvironmentBase *env);
+	static void reportStopGCIncrement(MM_EnvironmentRealtime *env);
+	static int J9THREAD_PROC metronomeAlarmThreadWrapper(void* userData);
+	static uintptr_t signalProtectedFunction(OMRPortLibrary *privatePortLibrary, void* userData);
 
 	bool initialize(MM_EnvironmentBase *env) { return true; }
+	bool doTracing(MM_EnvironmentRealtime* env, MM_RealtimeGCDelegate *realtimeDelegate);
+	void enableDoubleBarrier(MM_EnvironmentBase* env) {}
+	void disableDoubleBarrierOnThread(MM_EnvironmentBase* env, OMR_VMThread *vmThread) {}
+	void disableDoubleBarrier(MM_EnvironmentBase* env) {}
 	void tearDown(MM_EnvironmentBase *env) {}
 	void masterSetupForGC(MM_EnvironmentBase *env) {}
 	void masterCleanupAfterGC(MM_EnvironmentBase *env) {}
@@ -50,7 +59,7 @@ public:
 	void clearGCStats(MM_EnvironmentBase *env);
 };
 
-#endif  /* defined(OMR_GC_REALTIME) */
+#endif /* defined(OMR_GC_REALTIME) */
 
-#endif /* defined(REALTIMEGCDELEGATE_HPP_) */	
+#endif /* defined(MEMORYSUBSPACEMETRONOMEDELEGATE_HPP_) */
 

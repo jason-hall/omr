@@ -20,17 +20,39 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "MetronomeAlarmThreadDelegate.hpp"
+#include "MetronomeDelegate.hpp"
 
-#if defined(J9VM_GC_REALTIME)
+#if defined(OMR_GC_REALTIME)
 
 #include "omr.h"
 #include "EnvironmentRealtime.hpp"
-#include "GCExtensions.hpp"
 #include "MetronomeAlarmThread.hpp"
 
+void
+MM_MetronomeDelegate::yieldWhenRequested(MM_EnvironmentBase *env)
+{
+}
+
+bool
+MM_MetronomeDelegate::doTracing(MM_EnvironmentRealtime* env, MM_RealtimeGCDelegate *realtimeDelegate)
+{
+	return false;
+}
+
+void
+MM_MetronomeDelegate::clearGCStats(MM_EnvironmentBase *env)
+{
+	_extensions->globalGCStats.clear();
+}
+
+void
+MM_MetronomeDelegate::reportStopGCIncrement(MM_EnvironmentRealtime *env)
+{
+	/* OMRTODO: Fix up the stats stuff. */
+}
+
 uintptr_t
-MM_MetronomeAlarmThreadDelegate::signalProtectedFunction(OMRPortLibrary *privatePortLibrary, void* userData)
+MM_MetronomeDelegate::signalProtectedFunction(OMRPortLibrary *privatePortLibrary, void* userData)
 {
 	MM_MetronomeAlarmThread *alarmThread = (MM_MetronomeAlarmThread *)userData;
 	OMR_VM *omrVM = alarmThread->getScheduler()->_extensions->getOmrVM();
@@ -53,7 +75,7 @@ MM_MetronomeAlarmThreadDelegate::signalProtectedFunction(OMRPortLibrary *private
  * C entrypoint for the newly created alarm thread.
  */
 int J9THREAD_PROC
-MM_MetronomeAlarmThread::metronomeAlarmThreadWrapper(void* userData)
+MM_MetronomeDelegate::metronomeAlarmThreadWrapper(void* userData)
 {
 	MM_MetronomeAlarmThread *alarmThread = (MM_MetronomeAlarmThread *)userData;
 	OMR_VM *omrVM = alarmThread->getScheduler()->_extensions->getOmrVM();
@@ -73,5 +95,5 @@ MM_MetronomeAlarmThread::metronomeAlarmThreadWrapper(void* userData)
 	return 0;
 }
 
-#endif /* defined(J9VM_GC_REALTIME) */
+#endif /* defined(OMR_GC_REALTIME) */
 
