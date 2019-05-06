@@ -48,15 +48,6 @@ class MM_RealtimeMarkingScheme;
 class MM_SweepSchemeRealtime;
 class MM_FreeHeapRegionList;
 
-#define ITEM_IS_ARRAYLET 0x1
-#define IS_ITEM_OBJECT(item) ((item & ITEM_IS_ARRAYLET) == 0x0)
-#define IS_ITEM_ARRAYLET(item) ((item & ITEM_IS_ARRAYLET) == ITEM_IS_ARRAYLET)
-#define ITEM_TO_OBJECT(item) ((omrobjectptr_t)(((uintptr_t)item) & (~ITEM_IS_ARRAYLET)))
-#define ITEM_TO_ARRAYLET(item) ((fomrobject_t *)(((uintptr_t)item) & (~ITEM_IS_ARRAYLET)))
-#define ITEM_TO_UDATAP(item) ((uintptr_t *)(((uintptr_t)item) & (~ITEM_IS_ARRAYLET)))
-#define OBJECT_TO_ITEM(obj) ((uintptr_t) obj)
-#define ARRAYLET_TO_ITEM(arraylet) (((uintptr_t) arraylet) | ITEM_IS_ARRAYLET)
-
 /**
  * @todo Provide class documentation
  * @ingroup GC_Metronome
@@ -73,7 +64,7 @@ protected:
 private:
 	intptr_t _currentGCThreadPriority;
 	bool _previousCycleBelowTrigger;
-	bool _sweepingArraylets;	
+	bool _sweepingArraylets;
 
 	uintptr_t _gcPhase; /**< What gc phase are we currently in? */
 	
@@ -91,9 +82,6 @@ public:
 	bool _allowGrowth;
 	MM_OSInterface *_osInterface;
 	MM_Scheduler *_sched;
-
- 	bool _unmarkedImpliesCleared;
- 	bool _unmarkedImpliesStringsCleared; /**< If true, we can assume that unmarked strings in the string table will be cleared */
 
 	bool _fixHeapForWalk;
 	float _avgPercentFreeHeapAfterCollect;
@@ -142,7 +130,7 @@ public:
 
 	void traceAll(MM_EnvironmentBase *env);
 
-	void clearGCStats(MM_EnvironmentBase *env);
+	void clearGCStats();
 	void mergeGCStats(MM_EnvironmentBase *env);
 
 	void reportSyncGCStart(MM_EnvironmentBase *env, GCReason reason, uintptr_t reasonParameter);
@@ -199,10 +187,7 @@ public:
 	MMINLINE void setFixHeapForWalk(bool fixHeapForWalk) { _fixHeapForWalk = fixHeapForWalk; }
 	MMINLINE bool isPreviousCycleBelowTrigger() { return _previousCycleBelowTrigger; }
 	MMINLINE void setPreviousCycleBelowTrigger(bool previousCycleBelowTrigger) { _previousCycleBelowTrigger = previousCycleBelowTrigger; }
-		
-	void enqueuePointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet);
-	
-	
+
 	virtual void setupForGC(MM_EnvironmentBase *env);
 	virtual bool collectorStartup(MM_GCExtensionsBase* extensions);
 	virtual void collectorShutdown(MM_GCExtensionsBase *extensions);
@@ -226,7 +211,7 @@ public:
 	/* Create the access barrier */
 	MM_WorkPacketsRealtime* allocateWorkPackets(MM_EnvironmentBase *env);
 	/* Create an EventTypeSpaceVersion object for TuningFork tracing */
-	void doTracing(MM_EnvironmentRealtime* env);
+	void completeMarking(MM_EnvironmentRealtime* env);
 	virtual bool condYield(MM_EnvironmentBase *env, U_64 timeSlackNanoSec);
 	virtual bool shouldYield(MM_EnvironmentBase *env);
 	virtual void yield(MM_EnvironmentBase *env);

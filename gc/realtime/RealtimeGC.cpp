@@ -29,7 +29,6 @@
 #include "RealtimeGC.hpp"
 
 #include "AllocateDescription.hpp"
-// OMRTODO #include "BarrierSynchronization.hpp"
 #include "CycleState.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentRealtime.hpp"
@@ -105,8 +104,6 @@ MM_RealtimeGC::initialize(MM_EnvironmentBase *env)
 	_gcPhase = GC_PHASE_IDLE;
 	_extensions->realtimeGC = this;
 	_allowGrowth = false;
-	_unmarkedImpliesCleared = false;
-	_unmarkedImpliesStringsCleared = false;
 	
 	if (_extensions->gcTrigger == 0) {
 		_extensions->gcTrigger = (_extensions->memoryMax / 2);
@@ -243,7 +240,7 @@ MM_RealtimeGC::masterSetupForGC(MM_EnvironmentBase *env)
 	_workPackets->reset(env);	
 	
 	/* Clear the gc stats structure */
-	clearGCStats(env);
+	clearGCStats();
 
 	_realtimeDelegate.masterSetupForGC(env);
 }
@@ -268,10 +265,10 @@ MM_RealtimeGC::workerSetupForGC(MM_EnvironmentBase *env)
 /**
  */
 void
-MM_RealtimeGC::clearGCStats(MM_EnvironmentBase *env)
+MM_RealtimeGC::clearGCStats()
 {
 	_extensions->globalGCStats.clear();
-	_realtimeDelegate.clearGCStats(env);
+	_realtimeDelegate.clearGCStats();
 }
 
 /**
@@ -279,12 +276,6 @@ MM_RealtimeGC::clearGCStats(MM_EnvironmentBase *env)
 void
 MM_RealtimeGC::mergeGCStats(MM_EnvironmentBase *env)
 {
-}
-
-void
-MM_RealtimeGC::enqueuePointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet)
-{
-	env->getWorkStack()->push(env, (void *)ARRAYLET_TO_ITEM(arraylet));
 }
 
 uintptr_t
@@ -946,7 +937,7 @@ MM_RealtimeGC::flushRememberedSet(MM_EnvironmentRealtime *env)
  * If concurrentMarkingEnabled is true then tracing is completed concurrently.
  */
 void
-MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
+MM_RealtimeGC::completeMarking(MM_EnvironmentRealtime *env)
 {
 	
 	do {
@@ -954,7 +945,7 @@ MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
 			flushRememberedSet(env);
 			if (_extensions->concurrentTracingEnabled) {
 				setCollectorConcurrentTracing();
-				// OMRTODO _sched->_barrierSynchronization->releaseExclusiveVMAccess(env, _sched->_exclusiveVMAccessRequired);
+				_realtimeDelegate.releaseExclusiveVMAccess(env, _sched->_exclusiveVMAccessRequired);
 			} else {
 				setCollectorTracing();
 			}
@@ -962,7 +953,7 @@ MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
 			_moreTracingRequired = false;
 			
 			/* From this point on the Scheduler collaborates with WorkPacketsRealtime on yielding.
-			 * Strictly speaking this should be done first thing in incrementalConsumeQueue().
+			 * Strictly speaking this should be done first thing in incrementalCompleteScan().
 			 * However, it would require another synchronizeGCThreadsAndReleaseMaster barrier.
 			 * So we are just reusing the existing one.
 			 */
@@ -971,7 +962,7 @@ MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
 			env->_currentTask->releaseSynchronizedGCThreads(env);
 		}
 		
-		if(_markingScheme->incrementalConsumeQueue(env, MAX_UINT)) {
+		if(_markingScheme->incrementalCompleteScan(env, MAX_UINT)) {
 			_moreTracingRequired = true;
 		}
 
@@ -980,7 +971,7 @@ MM_RealtimeGC::doTracing(MM_EnvironmentRealtime *env)
 			_sched->popYieldCollaborator();
 			
 			if (_extensions->concurrentTracingEnabled) {
-				// OMRTODO _sched->_barrierSynchronization->acquireExclusiveVMAccess(env, _sched->_exclusiveVMAccessRequired);
+				_realtimeDelegate.acquireExclusiveVMAccess(env, _sched->_exclusiveVMAccessRequired);
 				setCollectorTracing();
 			}
 			_moreTracingRequired |= _realtimeDelegate.doTracing(env);
