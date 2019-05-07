@@ -85,62 +85,77 @@ MM_RealtimeMarkingScheme::tearDown(MM_EnvironmentBase *env)
 	MM_SegregatedMarkingScheme::tearDown(env);
 }
 
-/**
- * This function marks all of the live objects on the heap and handles all of the clearable
- * objects.
- * 
- */
 void
-MM_RealtimeMarkingScheme::markLiveObjects(MM_EnvironmentRealtime *env)
+MM_RealtimeMarkingScheme::markLiveObjectsInit(MM_EnvironmentBase *env, bool initMarkMap)
 {
-	MM_MetronomeDelegate *metronomeDelegate = _realtimeGC->getRealtimeDelegate();
-
-	env->getWorkStack()->reset(env, _realtimeGC->_workPackets);
+	MM_EnvironmentRealtime *realtimeEnv = MM_EnvironmentRealtime::getEnvironment(env);
+	realtimeEnv->getWorkStack()->reset(realtimeEnv, _realtimeGC->_workPackets);
 
 	/* These are thread-local stats that should probably be moved
 	 * into the MM_MarkStats structure.
 	 */
-	env->resetScannedCounters();
+	realtimeEnv->resetScannedCounters();
 
 	/* The write barrier must be enabled before any scanning begins. The double barrier will
 	 * be enabled for the duration of the thread scans. It gets disabled on a per thread basis
 	 * as the threads get scanned. It also gets "disabled" on a global basis once all threads
 	 * are scanned.
 	 */
-	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
-		_realtimeGC->enableWriteBarrier(env);
-		_realtimeGC->enableDoubleBarrier(env);
+	if (realtimeEnv->_currentTask->synchronizeGCThreadsAndReleaseMaster(realtimeEnv, UNIQUE_ID)) {
+		_realtimeGC->enableWriteBarrier(realtimeEnv);
+		_realtimeGC->enableDoubleBarrier(realtimeEnv);
 		/* BEN TODO: Ragged barrier here */
-		env->_currentTask->releaseSynchronizedGCThreads(env);
+		realtimeEnv->_currentTask->releaseSynchronizedGCThreads(realtimeEnv);
 	}
+}
 
-	metronomeDelegate->markLiveObjectsRoots(env);
-	_scheduler->condYieldFromGC(env);
-	/* Heap Marking and barrier processing.Cannot delay barrier processing until the end.*/	
-	_realtimeGC->completeMarking(env);
+void
+MM_RealtimeMarkingScheme::markLiveObjectsRoots(MM_EnvironmentBase *env)
+{
+	MM_EnvironmentRealtime *realtimeEnv = MM_EnvironmentRealtime::getEnvironment(env);
+	MM_MetronomeDelegate *metronomeDelegate = _realtimeGC->getRealtimeDelegate();
 
-	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+	metronomeDelegate->markLiveObjectsRoots(realtimeEnv);
+	_scheduler->condYieldFromGC(realtimeEnv);
+	/* Heap Marking and barrier processing. Cannot delay barrier processing until the end.*/	
+	_realtimeGC->completeMarking(realtimeEnv);
+
+	metronomeDelegate->flushRememberedSet(realtimeEnv);
+
+	if (realtimeEnv->_currentTask->synchronizeGCThreadsAndReleaseMaster(realtimeEnv, UNIQUE_ID)) {
 		metronomeDelegate->setUnmarkedImpliesCleared();
-		env->_currentTask->releaseSynchronizedGCThreads(env);
+		realtimeEnv->_currentTask->releaseSynchronizedGCThreads(realtimeEnv);
 	}
+}
 
+void
+MM_RealtimeMarkingScheme::markLiveObjectsScan(MM_EnvironmentBase *env)
+{
+	MM_EnvironmentRealtime *realtimeEnv = MM_EnvironmentRealtime::getEnvironment(env);
 	/* Process reference objects and finalizable objects. */
-	metronomeDelegate->markLiveObjectsScan(env);
+	_realtimeGC->getRealtimeDelegate()->markLiveObjectsScan(realtimeEnv);
 
-	_scheduler->condYieldFromGC(env);
-	
-	/* Do a final tracing phase to complete the marking phase.  It should not be possible for any thread,
+	_scheduler->condYieldFromGC(realtimeEnv);
+}
+
+void
+MM_RealtimeMarkingScheme::markLiveObjectsComplete(MM_EnvironmentBase *env)
+{
+	MM_EnvironmentRealtime *realtimeEnv = MM_EnvironmentRealtime::getEnvironment(env);
+	MM_MetronomeDelegate *metronomeDelegate = _realtimeGC->getRealtimeDelegate();
+
+	/* Do a final tracing phase to complete the marking phase. It should not be possible for any thread,
 	 * including NHRT's, to add elements to the rememberedSet between the end of this completeMarking() call and when
 	 * we disable the write barrier since the entire live set will be completed.
 	 */
-	_realtimeGC->completeMarking(env);
-	metronomeDelegate->markLiveObjectsComplete(env);
+	_realtimeGC->completeMarking(realtimeEnv);
+	metronomeDelegate->markLiveObjectsComplete(realtimeEnv);
 
-	if (env->_currentTask->synchronizeGCThreadsAndReleaseMaster(env, UNIQUE_ID)) {
+	if (realtimeEnv->_currentTask->synchronizeGCThreadsAndReleaseMaster(realtimeEnv, UNIQUE_ID)) {
 		metronomeDelegate->unsetUnmarkedImpliesCleared();
 
 		/* This is the symmetric call to the enabling of the write barrier that happens at the top of this method. */
-		_realtimeGC->disableWriteBarrier(env);
+		_realtimeGC->disableWriteBarrier(realtimeEnv);
 		/* BEN TODO: Ragged barrier here */
 
 		/* reset flag "overflow happened this GC cycle" */
@@ -148,7 +163,7 @@ MM_RealtimeMarkingScheme::markLiveObjects(MM_EnvironmentRealtime *env)
 
 		Assert_MM_true(_realtimeGC->_workPackets->isAllPacketsEmpty());
 
-		env->_currentTask->releaseSynchronizedGCThreads(env);
+		realtimeEnv->_currentTask->releaseSynchronizedGCThreads(realtimeEnv);
 	}
 }
 

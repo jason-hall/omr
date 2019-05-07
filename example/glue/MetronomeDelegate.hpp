@@ -72,9 +72,62 @@ public:
 	/* New methods */
 	bool doTracing(MM_EnvironmentRealtime* env);
 
-	uintptr_t scanPointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet);
-	uintptr_t scanObject(MM_EnvironmentRealtime *env, omrobjectptr_t objectPtr);
-	void markLiveObjects(MM_EnvironmentRealtime *env);
+	void markLiveObjectsRoots(MM_EnvironmentRealtime *env);
+	void markLiveObjectsScan(MM_EnvironmentRealtime *env);
+	void markLiveObjectsComplete(MM_EnvironmentRealtime *env);
+	void flushRememberedSet(MM_EnvironmentRealtime *env);
+	void setUnmarkedImpliesCleared();
+	void unsetUnmarkedImpliesCleared();
+
+	MMINLINE uintptr_t
+	scanPointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet)
+	{
+		fomrobject_t *startScanPtr = arraylet;
+		fomrobject_t *endScanPtr = startScanPtr + (_omr->_arrayletLeafSize / sizeof(fj9object_t));
+		return scanPointerRange(env, startScanPtr, endScanPtr);
+	}
+
+	MMINLINE UDATA
+	scanPointerRange(MM_EnvironmentRealtime *env, fj9object_t *startScanPtr, fj9object_t *endScanPtr)
+	{
+		fj9object_t *scanPtr = startScanPtr;
+		uintptr_t pointerFieldBytes = (UDATA)(endScanPtr - scanPtr);
+		uintptr_t pointerField = pointerFieldBytes / sizeof(fj9object_t);
+		while(scanPtr < endScanPtr) {
+			GC_SlotObject slotObject(omrVM, scanPtr);
+			_markingScheme->markObject(env, slotObject.readReferenceFromSlot());
+			scanPtr++;
+		}
+
+		env->addScannedBytes(pointerFieldBytes);
+		env->addScannedPointerFields(pointerField);
+
+		return pointerField;
+	}
+
+	MMINLINE uintptr_t
+	scanObject(MM_EnvironmentRealtime *env, omrobjectptr_t objectPtr)
+	{
+		/* Object slots */
+		fj9object_t *scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
+		uintptr_t objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
+		fj9object_t *endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
+
+		uintptr_t pointerFields = 0;
+		while(scanPtr < endScanPtr) {
+			pointerFields++;
+			GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
+			_markingScheme->markObject(env, slotObject.readReferenceFromSlot(), false);
+
+			scanPtr += 1;
+		}
+
+		env->addScannedBytes(objectSize);
+		env->addScannedPointerFields(pointerFields);
+		env->incScannedObjects();
+
+		return pointerFields;
+	}
 
 	/*
 	 * Friends

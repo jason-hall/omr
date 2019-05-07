@@ -67,7 +67,10 @@ public:
 	static MM_RealtimeMarkingScheme *newInstance(MM_EnvironmentBase *env, MM_RealtimeGC *realtimeGC);
 	void kill(MM_EnvironmentBase *env);
 
-	void markLiveObjects(MM_EnvironmentRealtime *env);
+	void markLiveObjectsInit(MM_EnvironmentBase *env, bool initMarkMap);
+	void markLiveObjectsRoots(MM_EnvironmentBase *env);
+	void markLiveObjectsScan(MM_EnvironmentBase *env);
+	void markLiveObjectsComplete(MM_EnvironmentBase *env);
 
 	MMINLINE bool isScanned(omrobjectptr_t objectPtr)
 	{
