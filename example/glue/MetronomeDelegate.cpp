@@ -186,20 +186,33 @@ MM_MetronomeDelegate::getSplitArraysProcessed(MM_EnvironmentRealtime *env)
 	return 0;
 }
 
-uintptr_t
-scanPointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet)
+void
+MM_MetronomeDelegate::markLiveObjectsRoots(MM_EnvironmentRealtime *env)
 {
-	return 0;
-}
-
-uintptr_t
-scanObject(MM_EnvironmentRealtime *env, omrobjectptr_t objectPtr)
-{
-	return 0;
 }
 
 void
-markLiveObjects(MM_EnvironmentRealtime *env)
+MM_MetronomeDelegate::markLiveObjectsScan(MM_EnvironmentRealtime *env)
+{
+}
+
+void
+MM_MetronomeDelegate::markLiveObjectsComplete(MM_EnvironmentRealtime *env)
+{
+}
+
+void
+MM_MetronomeDelegate::checkReferenceBuffer(MM_EnvironmentRealtime *env)
+{
+}
+
+void
+MM_MetronomeDelegate::setUnmarkedImpliesCleared()
+{
+}
+
+void
+MM_MetronomeDelegate::unsetUnmarkedImpliesCleared()
 {
 }
 

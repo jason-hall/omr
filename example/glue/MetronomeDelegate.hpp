@@ -72,9 +72,61 @@ public:
 	/* New methods */
 	bool doTracing(MM_EnvironmentRealtime* env);
 
-	uintptr_t scanPointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet);
-	uintptr_t scanObject(MM_EnvironmentRealtime *env, omrobjectptr_t objectPtr);
-	void markLiveObjects(MM_EnvironmentRealtime *env);
+	void markLiveObjectsRoots(MM_EnvironmentRealtime *env);
+	void markLiveObjectsScan(MM_EnvironmentRealtime *env);
+	void markLiveObjectsComplete(MM_EnvironmentRealtime *env);
+	void checkReferenceBuffer(MM_EnvironmentRealtime *env);
+	void setUnmarkedImpliesCleared();
+	void unsetUnmarkedImpliesCleared();
+
+	MMINLINE uintptr_t
+	scanPointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet)
+	{
+		fomrobject_t *startScanPtr = arraylet;
+		fomrobject_t *endScanPtr = startScanPtr + (env->getOmrVM()->arrayletLeafSize / sizeof(fj9object_t));
+		return scanPointerRange(env, startScanPtr, endScanPtr);
+	}
+
+	MMINLINE uintptr_t
+	scanPointerRange(MM_EnvironmentRealtime *env, fomrobject_t *startScanPtr, fomrobject_t *endScanPtr)
+	{
+		fomrobject_t *scanPtr = startScanPtr;
+		uintptr_t pointerFieldBytes = (uintptr_t)(endScanPtr - scanPtr);
+		uintptr_t pointerField = pointerFieldBytes / sizeof(fj9object_t);
+		while(scanPtr < endScanPtr) {
+			GC_SlotObject slotObject(env->getOmrVM(), scanPtr);
+			_markingScheme->markObject(env, slotObject.readReferenceFromSlot());
+			scanPtr++;
+		}
+
+		env->addScannedBytes(pointerFieldBytes);
+		env->addScannedPointerFields(pointerField);
+
+		return pointerField;
+	}
+
+	MMINLINE GC_ObjectScanner *
+	getObjectScanner(MM_EnvironmentRealtime *env, omrobjectptr_t objectPtr, void *scannerSpace, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo)
+	{
+		GC_ObjectScanner *objectScanner = NULL;
+		switch(_extensions->objectModel.getScanType(objectPtr)) {
+		case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
+		{
+			/* Very small arrays cannot be set as scanned (no scanned bit in Mark Map reserved for them) */
+			bool canSetAsScanned = _extensions->minArraySizeToSetAsScanned <= _extensions->indexableObjectModel.arrayletSize((omrarrayptr_t)objectPtr, 0));
+
+			/* Already scanned by ref array copy optimization */
+			if (!canSetAsScanned || !_markingScheme->isScanned(objectPtr)) {
+				objectScanner = GC_MetronomeArrayObjectScanner::newInstance(env, objectPtr, scannerSpace, GC_ObjectScanner::indexableObject);
+			}
+			break;
+		}
+		default:
+			objectScanner = _realtimeGC->getMarkingScheme()->_delegate.getObjectScanner(env, objectPtr, scannerSpace, SCAN_REASON_PACKET, sizeToDo);
+		}
+
+		return objectScanner;
+	}
 
 	/*
 	 * Friends
