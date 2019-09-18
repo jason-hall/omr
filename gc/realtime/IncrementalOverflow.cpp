@@ -34,6 +34,8 @@
 #include "RealtimeMarkingScheme.hpp"
 #include "WorkPackets.hpp"
 
+namespace OMR
+{
 
 /****************************************
  * Initialization
@@ -351,3 +353,6 @@ MM_IncrementalOverflow::reset(MM_EnvironmentBase *env)
 	_overflowList = NULL;
 	omrthread_monitor_exit(_overflowListMonitor);
 }
+
+} /* namespace OMR */
+s

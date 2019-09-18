@@ -51,6 +51,10 @@
 #include "modronnls.h"
 
 #include "OSInterface.hpp"
+
+namespace OMR
+{
+
 /**
  * Initialization.
  */
@@ -198,4 +202,6 @@ MM_OSInterface::maskSignals()
 	sigprocmask(SIG_SETMASK, &mask_set, NULL);
 #endif /* LINUX */
 }
+
+} /* namespace OMR */
 

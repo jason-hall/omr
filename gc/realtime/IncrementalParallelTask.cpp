@@ -27,6 +27,9 @@
 
 #include "ModronAssertions.h"
 
+namespace OMR
+{
+
 void
 MM_IncrementalParallelTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, const char *id)
 {
@@ -197,3 +200,6 @@ MM_IncrementalParallelTask::releaseSynchronizedGCThreads(MM_EnvironmentBase *env
 		}
 	}
 }
+
+} /* namespace OMR */
+

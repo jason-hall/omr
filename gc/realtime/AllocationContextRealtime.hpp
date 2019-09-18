@@ -36,6 +36,9 @@ class MM_EnvironmentBase;
 class MM_GlobalAllocationManagerSegregated;
 class MM_RegionPoolSegregated;
 
+namespace OMR
+{
+
 class MM_AllocationContextRealtime : public MM_AllocationContextSegregated
 {
 /* Data members / Types */
@@ -67,4 +70,7 @@ private:
 	void tearDown(MM_EnvironmentBase *env);
 };
 
+} /* namespace OMR */
+
 #endif /* ALLOCATIONCONTEXTREALTIME_HPP_ */
+

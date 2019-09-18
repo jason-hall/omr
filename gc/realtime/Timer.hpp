@@ -25,6 +25,9 @@
 
 #include "Metronome.hpp"
 
+namespace OMR
+{
+
 class MM_EnvironmentBase;
 class MM_OSInterface;
 
@@ -65,4 +68,7 @@ private:
 	
 };
 
+} /* namespace OMR */
+
 #endif /*TIMER_HPP_*/
+

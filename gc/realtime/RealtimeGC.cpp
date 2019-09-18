@@ -56,6 +56,9 @@
 #define TUNINGFORK_STACCATO_EVENT_SPACE_NAME "com.ibm.realtime.vm.trace.gc.metronome"
 #define TUNINGFORK_STACCATO_EVENT_SPACE_VERSION 200
 
+namespace OMR
+{
+
 MM_RealtimeGC *
 MM_RealtimeGC::newInstance(MM_EnvironmentBase *env)
 {
@@ -989,4 +992,6 @@ MM_RealtimeGC::disableDoubleBarrier(MM_EnvironmentBase* env)
 {
 	_realtimeDelegate.disableDoubleBarrier(env);
 }
+
+} /* namespace OMR */
 

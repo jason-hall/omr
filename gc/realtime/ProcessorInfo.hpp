@@ -31,6 +31,9 @@
 #include "BaseVirtual.hpp"
 #include "GCExtensionsBase.hpp"
 
+namespace OMR
+{
+
 class MM_EnvironmentBase;
 class MM_OSInterface;
 
@@ -63,5 +66,7 @@ private:
 	double readFrequency();
 };
 
+} /* namespace OMR */
 
 #endif /* PROCESSORINFO_HPP_ */
+

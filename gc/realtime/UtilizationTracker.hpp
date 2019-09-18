@@ -36,6 +36,8 @@ class MM_Metronome;
 class MM_RealtimeGC;
 class MM_Scheduler;
 
+namespace OMR
+{
 
 /**
  * This class tracks the current mutator utilization by remembering what executed (and the interleaving)
@@ -98,5 +100,7 @@ public:
 		_typeId = __FUNCTION__;
 	}
 };
+
+} /* namespace OMR */
 
 #endif /* UTILIZATIONTRACKER_HPP_ */

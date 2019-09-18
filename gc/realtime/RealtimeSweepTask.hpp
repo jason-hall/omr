@@ -23,6 +23,9 @@
 #if !defined(REALTIMESWEEPTASK_HPP_)
 #define REALTIMESWEEPTASK_HPP_
 
+namespace OMR
+{
+
 #include "omr.h"
 #include "omrcfg.h"
 
@@ -60,5 +63,7 @@ public:
 protected:
 private:
 };
+
+} /* namespace OMR */
 
 #endif /* REALTIMESWEEPTASK_HPP_ */

@@ -27,6 +27,9 @@
 
 #include "EnvironmentBase.hpp"
 
+namespace OMR
+{
+
 class MM_YieldCollaborator : public MM_BaseNonVirtual {
 	
 public:
@@ -87,7 +90,8 @@ public:
 	{
 		_typeId = __FUNCTION__;
 	}
-	
 };
+
+} /* namespace OMR */
 
 #endif /* YIELDCOLLABORATOR_HPP_ */

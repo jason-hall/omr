@@ -27,6 +27,9 @@
 
 #include "SweepSchemeRealtime.hpp"
 
+namespace OMR
+{
+
 /**
  * Allocate and initialize a new instance of the receiver.
  * @return a new instance of the receiver, or NULL on failure.
@@ -144,4 +147,6 @@ MM_SweepSchemeRealtime::updateSweepSmallRegionCount()
 	}
 	return mustYield;
 }
+
+} /* namespace OMR */
 

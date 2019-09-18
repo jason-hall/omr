@@ -44,6 +44,9 @@
 #include "Timer.hpp"
 #include "UtilizationTracker.hpp"
 
+namespace OMR
+{
+
 /**
  * Initialization.
  * @todo Provide method documentation
@@ -1055,3 +1058,6 @@ j9gc_startGCIfTimeExpired(OMR_VMThread* vmThread)
 }
 
 }
+
+} /* namespace OMR */
+

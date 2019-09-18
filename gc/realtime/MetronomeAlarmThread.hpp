@@ -35,6 +35,9 @@
 #include "MetronomeAlarm.hpp"
 #include "EnvironmentRealtime.hpp"
 
+namespace OMR
+{
+
 class MM_Timer;
 
 class MM_MetronomeAlarmThread : public MM_BaseVirtual
@@ -95,6 +98,8 @@ public:
 	friend class MM_Scheduler;
 	friend class MM_MetronomeDelegate;
 };
+
+} /* namespace OMR */
 
 #endif /* METRONOMEALARMTHREAD_HPP_ */
 

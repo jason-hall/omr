@@ -29,6 +29,9 @@
 
 #if defined(OMR_GC_REALTIME)
 
+namespace OMR
+{
+
 MM_HeapRegionDescriptorRealtime::MM_HeapRegionDescriptorRealtime(MM_EnvironmentBase *env, void *lowAddress, void *highAddress)
 	: MM_HeapRegionDescriptorSegregated(env, lowAddress, highAddress)
 {
@@ -60,5 +63,7 @@ MM_HeapRegionDescriptorRealtime::destructor(MM_EnvironmentBase *env, MM_HeapRegi
 {
 	((MM_HeapRegionDescriptorRealtime*)descriptor)->tearDown(env);
 }
+
+} /* namespace OMR */
 
 #endif /* OMR_GC_REALTIME */

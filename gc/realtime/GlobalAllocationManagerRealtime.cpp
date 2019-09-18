@@ -24,6 +24,9 @@
 
 #include "GlobalAllocationManagerRealtime.hpp"
 
+namespace OMR
+{
+
 MM_GlobalAllocationManagerRealtime *
 MM_GlobalAllocationManagerRealtime::newInstance(MM_EnvironmentBase *env, MM_RegionPoolSegregated *regionPool)
 {
@@ -51,3 +54,5 @@ MM_GlobalAllocationManagerRealtime::createAllocationContext(MM_EnvironmentBase *
 {
 	return MM_AllocationContextRealtime::newInstance(env, this, regionPool);
 }
+
+} /* namespace OMR */

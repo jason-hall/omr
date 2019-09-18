@@ -29,6 +29,9 @@
 #include "RealtimeSweepTask.hpp"
 #include "SweepSchemeRealtime.hpp"
 
+namespace OMR
+{
+
 void
 MM_RealtimeSweepTask::run(MM_EnvironmentBase *envBase)
 {
@@ -63,3 +66,6 @@ MM_RealtimeSweepTask::cleanup(MM_EnvironmentBase *envBase)
 		env->_sweepStats.sweepChunksProcessed, 
 		(U_32)omrtime_hires_delta(0, env->_sweepStats.mergeTime, OMRPORT_TIME_DELTA_IN_MILLISECONDS));
 }
+
+} /* namespace OMR */
+

@@ -29,6 +29,9 @@
 #include "ModronAssertions.h"
 #include "ProcessorInfo.hpp"
 
+namespace OMR
+{
+
 /**
  * Initialization.
  */
@@ -135,3 +138,6 @@ MM_ProcessorInfo::readFrequency()
 #endif
 	return freq;
 }
+
+} /* namespace OMR */
+

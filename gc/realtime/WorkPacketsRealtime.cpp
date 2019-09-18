@@ -33,6 +33,9 @@
 
 #include "WorkPacketsRealtime.hpp"
 
+namespace OMR
+{
+
 /**
  * Instantiate a MM_WorkPacketsRealtime
  * @param mode type of packets (used for getting the right overflow handler)
@@ -192,4 +195,6 @@ MM_WorkPacketsRealtime::notifyWaitingThreads(MM_EnvironmentBase *env)
 	omrthread_monitor_notify(_inputListMonitor);
 	omrthread_monitor_exit(_inputListMonitor);
 }
+
+} /* namespace OMR */
 

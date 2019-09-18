@@ -31,6 +31,9 @@
 
 #if defined(OMR_GC_REALTIME)
 
+namespace OMR
+{
+
 class MM_EnvironmentBase;
 
 class MM_HeapRegionDescriptorRealtime : public MM_HeapRegionDescriptorSegregated
@@ -53,6 +56,8 @@ public:
 	MM_HeapRegionDescriptorRealtime *getNextOverflowRegion() {return _nextOverflowedRegion;}
 	void setNextOverflowRegion(MM_HeapRegionDescriptorRealtime *region) {_nextOverflowedRegion = region;}
 };
+
+} /* namespace OMR */
 
 #endif /* OMR_GC_REALTIME */
 

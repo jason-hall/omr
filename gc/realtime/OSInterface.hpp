@@ -40,7 +40,8 @@ class MM_ProcessorInfo;
 #define SCHED_FIFO 0
 #endif /* WIN32 */
 
-
+namespace OMR
+{
 	
 /**
  * @todo Provide class documentation
@@ -85,5 +86,7 @@ protected:
 private:
 };
 
+} /* namespace OMR */
 
 #endif /* OSINTERFACE_HPP_ */
+

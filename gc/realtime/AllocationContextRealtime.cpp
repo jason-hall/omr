@@ -40,6 +40,9 @@
 
 #include "AllocationContextRealtime.hpp"
 
+namespace OMR
+{
+
 MM_AllocationContextRealtime *
 MM_AllocationContextRealtime::newInstance(MM_EnvironmentBase *env, MM_GlobalAllocationManagerSegregated *gam, MM_RegionPoolSegregated *regionPool)
 {
@@ -162,3 +165,6 @@ MM_AllocationContextRealtime::shouldPreMarkSmallCells(MM_EnvironmentBase *env)
 
 	return result;
 }
+
+} /* namespace OMR */
+

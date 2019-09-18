@@ -35,6 +35,9 @@
 #include "ParallelTask.hpp"
 #include "YieldCollaborator.hpp"
 
+namespace OMR
+{
+
 /**
  * @todo Provide class documentation
  * @ingroup GC_Realtime
@@ -64,4 +67,7 @@ public:
 	};
 };
 
+} /* namespace OMR */
+
 #endif /* INCREMENTAL_PARALLEL_TASK_HPP_ */
+

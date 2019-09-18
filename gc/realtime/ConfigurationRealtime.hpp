@@ -38,6 +38,9 @@ class MM_GlobalCollector;
 class MM_Heap;
 class MM_GlobalAllocationManagerSegregated;
 
+namespace OMR
+{
+
 class MM_ConfigurationRealtime : public MM_Configuration
 {
 /* Data members / Types */
@@ -77,5 +80,6 @@ protected:
 private:
 };
 
+} /* namespace OMR */
 
 #endif /* CONFIGURATIONREALTIME_HPP_ */

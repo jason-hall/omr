@@ -55,6 +55,9 @@
 
 class MM_MemoryPoolSegregated;
 
+namespace OMR
+{
+
 bool
 MM_ConfigurationRealtime::initialize(MM_EnvironmentBase *env)
 {
@@ -232,3 +235,6 @@ MM_ConfigurationRealtime::createGlobalCollector(MM_EnvironmentBase *env)
 {
 	return MM_RealtimeGC::newInstance(env);
 }
+
+} /* namespace OMR */
+

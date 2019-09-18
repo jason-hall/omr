@@ -24,6 +24,9 @@
 
 #include "Task.hpp"
 
+namespace OMR
+{
+
 void
 MM_YieldCollaborator::resumeSlavesFromYield(MM_EnvironmentBase *env)
 {
@@ -74,3 +77,6 @@ MM_YieldCollaborator::yield(MM_EnvironmentBase *env)
 	
 	omrthread_monitor_exit(*_mutex);
 }
+
+} /* namespace OMR */
+

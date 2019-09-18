@@ -32,6 +32,9 @@
 
 #include "UtilizationTracker.hpp"
 
+namespace OMR
+{
+
 /**
  * Create a new instance of the UtilizationTracker class.
  */
@@ -235,3 +238,6 @@ MM_UtilizationTracker::getNanosLeft(MM_EnvironmentRealtime *env, U_64 sliceStart
 	
 	return nanosLeft;
 }
+
+} /* namespace OMR */
+

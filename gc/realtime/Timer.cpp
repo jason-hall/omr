@@ -29,6 +29,9 @@
 
 #include "Timer.hpp"
 
+namespace OMR
+{
+
 /**
  * Create a new instance of the MM_Timer class.
  * @param timerDesc String describing the relative timer, should be static!
@@ -174,3 +177,6 @@ MM_Timer::hasTimeElapsed(U_64 startTimeInNanos, U_64 timeToWaitInNanos)
 	}
 	return false;
 }
+
+} /* namespace OMR */
+

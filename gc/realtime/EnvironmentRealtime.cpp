@@ -32,6 +32,9 @@
 #include "SegregatedAllocationTracker.hpp"
 #include "Timer.hpp"
 
+namespace OMR
+{
+
 MM_EnvironmentRealtime *
 MM_EnvironmentRealtime::newInstance(MM_GCExtensionsBase *extensions, OMR_VMThread *omrVMThread)
 {
@@ -126,3 +129,6 @@ MM_EnvironmentRealtime::reportScanningResumed() {
 		_rootScanner->reportScanningResumed();
 	}
 }
+
+} /* namespace OMR */
+

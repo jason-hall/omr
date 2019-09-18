@@ -28,6 +28,9 @@
 #if !defined(REALTIMEGC_HPP_)
 #define REALTIMEGC_HPP_
 
+namespace OMR
+{
+
 #include "CycleState.hpp"
 #include "GCExtensionsBase.hpp"
 #include "GlobalCollector.hpp"
@@ -261,5 +264,7 @@ public:
 	friend class MM_Scheduler;
 	friend class MM_MetronomeDelegate;
 };
+
+} /* namespace OMR */
 
 #endif /* REALTIMEGC_HPP_ */

@@ -54,6 +54,9 @@
 #include <signal.h>
 #endif /* defined(LINUX) && !defined(J9ZTPF) */
 
+namespace OMR
+{
+
 MM_HRTAlarm *
 MM_HRTAlarm::newInstance(MM_EnvironmentBase *env)
 {
@@ -305,3 +308,6 @@ MM_ITAlarm::tearDown(MM_EnvironmentBase *env)
 #endif
 	MM_Alarm::tearDown(env);
 }
+
+} /* namespace OMR */
+

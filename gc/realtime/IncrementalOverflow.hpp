@@ -35,6 +35,9 @@
 class MM_Packet;
 class MM_HeapRegionDescriptorRealtime;
 
+namespace OMR
+{
+
 /**
  * @todo Provide class documentation
  */
@@ -87,5 +90,7 @@ private:
 	void pushLocal(MM_EnvironmentBase *env, MM_HeapRegionDescriptorRealtime *region, MM_OverflowType type);
 	void flushLocal(MM_EnvironmentBase *env, MM_OverflowType type);
 };
+
+} /* namespace OMR */
 
 #endif /* INCREMENTALOVERFLOW_HPP_ */

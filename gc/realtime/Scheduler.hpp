@@ -51,6 +51,9 @@ class MM_UtilizationTracker;
 #define METRONOME_GC_ON 1
 #define METRONOME_GC_OFF 0
 
+namespace OMR
+{
+
 /**
  * @todo Provide class documentation
  * @ingroup GC_Metronome
@@ -281,6 +284,8 @@ public:
 	 */
 	friend class MM_EnvironmentRealtime;
 };
+
+} /* namespace OMR */
 
 #endif /* SCHEDULER_HPP_ */
 

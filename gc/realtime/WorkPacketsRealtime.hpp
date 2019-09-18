@@ -30,6 +30,9 @@
 
 class MM_IncrementalOverflow;
 
+namespace OMR
+{
+
 class MM_WorkPacketsRealtime : public MM_WorkPacketsSATB
 {
 public:
@@ -63,6 +66,8 @@ protected:
 
 private:
 };
+
+} /* namespace OMR */
 
 #endif /* WORKPACKETSREALTIME_HPP_ */
 

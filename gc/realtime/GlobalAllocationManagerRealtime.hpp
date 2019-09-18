@@ -29,6 +29,9 @@ class MM_EnvironmentBase;
 class MM_RegionPoolSegregated;
 class MM_AllocationContextSegregated;
 
+namespace OMR
+{
+
 class MM_GlobalAllocationManagerRealtime : public MM_GlobalAllocationManagerSegregated
 {
 	/*
@@ -57,5 +60,7 @@ public:
 	static MM_GlobalAllocationManagerRealtime *newInstance(MM_EnvironmentBase *env, MM_RegionPoolSegregated *regionPool);
 
 };
+
+} /* namespace OMR */
 
 #endif /* GLOBALALLOCATIONMANAGERREALTIME_HPP_ */

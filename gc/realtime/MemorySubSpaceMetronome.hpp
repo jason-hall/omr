@@ -33,6 +33,9 @@ class MM_EnvironmentBase;
 class MM_GCCode;
 class MM_MemoryPool;
 
+namespace OMR
+{
+
 /**
  * @todo Provide class documentation
  * @ingroup GC_Metronome
@@ -75,6 +78,8 @@ public:
 		_typeId = __FUNCTION__;
 	};
 };
+
+} /* namespace OMR */
 
 #endif /* MEMORYSUBSPACEMETRONOME_HPP_ */
 

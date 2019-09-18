@@ -41,6 +41,8 @@
 #include <linux/unistd.h>
 #endif
 
+namespace OMR
+{
 
 MM_MetronomeAlarmThread *
 MM_MetronomeAlarmThread::newInstance(MM_EnvironmentBase *env)
@@ -180,4 +182,7 @@ MM_MetronomeAlarmThread::run(MM_EnvironmentRealtime *env)
 	}
 	omrthread_monitor_exit(_mutex);
 }
+
+} /* namespace OMR */
+
 

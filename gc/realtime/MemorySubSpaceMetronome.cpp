@@ -35,6 +35,9 @@
 
 #include "MemorySubSpaceMetronome.hpp"
 
+namespace OMR
+{
+
 /**
  * Allocation.
  * @todo Provide class documentation
@@ -208,3 +211,6 @@ MM_MemorySubSpaceMetronome::initialize(MM_EnvironmentBase *env)
 
 	return true;
 }
+
+} /* namespace OMR */
+

@@ -34,6 +34,9 @@ class MM_EnvironmentBase;
 class MM_RealtimeGC;
 class MM_RealtimeMarkingScheme;
 
+namespace OMR
+{
+
 /**
  * Task representing a the mark phase of Metronome global collection.
  */
@@ -59,4 +62,7 @@ public:
 	}
 };
 
+} /* namespace OMR */
+
 #endif /* REALTIMEMARKTASK_HPP_ */
+

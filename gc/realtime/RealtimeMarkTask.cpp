@@ -33,6 +33,9 @@
 #include "RealtimeMarkingScheme.hpp"
 #include "RealtimeMarkTask.hpp"
 
+namespace OMR
+{
+
 void
 MM_RealtimeMarkTask::run(MM_EnvironmentBase *env)
 {
@@ -93,3 +96,6 @@ MM_RealtimeMarkTask::cleanup(MM_EnvironmentBase *envBase)
 		env->_workPacketStats.workPacketsExchanged,
 		delegate->getSplitArraysProcessed(env));
 }
+
+} /* namespace OMR */
+

@@ -34,6 +34,9 @@ class MM_HeapRegionDescriptorRealtime;
 class MM_RealtimeRootScanner;
 class MM_Timer;
 
+namespace OMR
+{
+
 class MM_EnvironmentRealtime : public MM_EnvironmentBase
 {
 /* Data section */
@@ -157,8 +160,10 @@ protected:
 	virtual void tearDown(MM_GCExtensionsBase *extensions);
 	
 private:
-
 };
 
+} /* namespace OMR */
+
 #endif /* ENVIRONMENTREALTIME_HPP_ */
+
 

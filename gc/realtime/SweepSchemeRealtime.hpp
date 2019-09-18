@@ -32,6 +32,9 @@ class MM_EnvironmentBase;
 class MM_MarkMap;
 class MM_Scheduler;
 
+namespace OMR
+{
+
 class MM_SweepSchemeRealtime : public MM_SweepSchemeSegregated
 {
 	/*
@@ -86,5 +89,7 @@ public:
 		MM_SweepSchemeSegregated::sweep(env, _realtimeGC->_memoryPool, _realtimeGC->isFixHeapForWalk());
 	}
 };
+
+} /* namespace OMR */
 
 #endif /* SWEEPSCHEMEREALTIME_HPP_ */

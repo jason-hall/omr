@@ -47,6 +47,9 @@ class MM_MetronomeAlarmThread;
 #include <signal.h>
 #endif /* LINUX */
 
+namespace OMR
+{
+
  /**
  * MM_Alarm
  * A hi-resolution alarm that Metronome can use to gain control periodically
@@ -139,5 +142,7 @@ public:
 	static MM_MetronomeAlarmThread *alarmHandlerArgument;  /**< signal handlers do not get user-supplied args	 */
 #endif /* LINUX */
 };
+
+} /* namespace OMR */
 
 #endif /* METRONOME_ALARM_HPP_ */
