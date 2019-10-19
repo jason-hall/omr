@@ -32,6 +32,9 @@
 
 #include "SegregatedMarkingScheme.hpp"
 
+namespace OMR
+{
+
 class MM_RealtimeGC;
 class MM_RealtimeRootScanner;
 class MM_Scheduler;
@@ -48,9 +51,6 @@ class MM_Scheduler;
 #define REFERENCE_OBJECT_YIELD_CHECK_INTERVAL 200
 #define UNFINALIZED_OBJECT_YIELD_CHECK_INTERVAL 70
 #define OWNABLE_SYNCHRONIZER_OBJECT_YIELD_CHECK_INTERVAL 70
-
-namespace OMR
-{
 
 class MM_RealtimeMarkingScheme : public MM_SegregatedMarkingScheme
 {

@@ -32,12 +32,13 @@
 #include "Metronome.hpp"
 
 class MM_EnvironmentBase;
-class MM_Metronome;
-class MM_RealtimeGC;
-class MM_Scheduler;
 
 namespace OMR
 {
+
+class MM_Metronome;
+class MM_RealtimeGC;
+class MM_Scheduler;
 
 /**
  * This class tracks the current mutator utilization by remembering what executed (and the interleaving)

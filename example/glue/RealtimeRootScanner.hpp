@@ -39,6 +39,10 @@
 
 class MM_Dispatcher;
 class MM_MemorySubSpace;
+
+namespace OMR
+{
+
 class MM_RealtimeMarkingScheme;
 
 class MM_RealtimeRootScanner : public MM_RootScanner
@@ -87,6 +91,8 @@ public:
 		_typeId = __FUNCTION__;
 	}
 };
+
+} /* namespace OMR */
 
 #endif  /* defined(OMR_GC_REALTIME) */
 

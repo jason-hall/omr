@@ -29,13 +29,14 @@
 #include "CycleState.hpp"
 #include "IncrementalParallelTask.hpp"
 
-class MM_Dispatcher;
 class MM_EnvironmentBase;
-class MM_RealtimeGC;
-class MM_RealtimeMarkingScheme;
 
 namespace OMR
 {
+
+class MM_Dispatcher;
+class MM_RealtimeGC;
+class MM_RealtimeMarkingScheme;
 
 /**
  * Task representing a the mark phase of Metronome global collection.

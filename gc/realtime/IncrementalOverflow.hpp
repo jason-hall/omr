@@ -33,10 +33,11 @@
 #include "WorkPacketOverflow.hpp"
 
 class MM_Packet;
-class MM_HeapRegionDescriptorRealtime;
 
 namespace OMR
 {
+
+class MM_HeapRegionDescriptorRealtime;
 
 /**
  * @todo Provide class documentation

@@ -31,10 +31,11 @@
 #include "BaseVirtual.hpp"
 #include "GCExtensionsBase.hpp"
 
+class MM_EnvironmentBase;
+
 namespace OMR
 {
 
-class MM_EnvironmentBase;
 class MM_OSInterface;
 
 /**

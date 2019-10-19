@@ -28,9 +28,6 @@
 #if !defined(REALTIMEGC_HPP_)
 #define REALTIMEGC_HPP_
 
-namespace OMR
-{
-
 #include "CycleState.hpp"
 #include "GCExtensionsBase.hpp"
 #include "GlobalCollector.hpp"
@@ -44,12 +41,16 @@ namespace OMR
 #include "Scheduler.hpp"
 #include "WorkPacketsRealtime.hpp"
 
-class MM_Dispatcher;
 class MM_EnvironmentBase;
+class MM_FreeHeapRegionList;
+
+namespace OMR
+{
+
+class MM_Dispatcher;
 class MM_MemorySubSpaceMetronome;
 class MM_RealtimeMarkingScheme;
 class MM_SweepSchemeRealtime;
-class MM_FreeHeapRegionList;
 
 /**
  * @todo Provide class documentation

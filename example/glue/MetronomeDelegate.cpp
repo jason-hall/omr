@@ -37,6 +37,9 @@
 #include "RealtimeMarkingScheme.hpp"
 #include "Scheduler.hpp"
 
+namespace OMR
+{
+
 void
 MM_MetronomeDelegate::yieldWhenRequested(MM_EnvironmentBase *env)
 {
@@ -215,6 +218,8 @@ void
 MM_MetronomeDelegate::unsetUnmarkedImpliesCleared()
 {
 }
+
+} /* namespace OMR */
 
 #endif /* defined(OMR_GC_REALTIME) */
 

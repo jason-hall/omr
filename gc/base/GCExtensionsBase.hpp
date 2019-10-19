@@ -81,11 +81,13 @@ class MM_SweepHeapSectioning;
 class MM_SweepPoolManager;
 class MM_SweepPoolManagerAddressOrderedList;
 class MM_SweepPoolManagerAddressOrderedListBase;
-class MM_RealtimeGC;
 class MM_VerboseManagerBase;
 struct J9Pool;
 
 namespace OMR {
+
+class MM_RealtimeGC;
+
 namespace GC {
 #if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
 class HeapRegionStateTable;
@@ -598,7 +600,7 @@ public:
 	bool synchronousGCOnOOM;
 	bool extraYield;
 	/* Global variables */
-	MM_RealtimeGC* realtimeGC;
+	OMR::MM_RealtimeGC* realtimeGC;
 	bool fixHeapForWalk; /**< configuration flag set by command line option or GC Check onload */
 	uintptr_t minArraySizeToSetAsScanned;
 	uintptr_t overflowCacheCount; /**< How many entries should there be in the environments local overflow cache */

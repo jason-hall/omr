@@ -28,10 +28,10 @@
 #include "WorkPacketsSATB.hpp"
 #include "YieldCollaborator.hpp"
 
-class MM_IncrementalOverflow;
-
 namespace OMR
 {
+
+class MM_IncrementalOverflow;
 
 class MM_WorkPacketsRealtime : public MM_WorkPacketsSATB
 {

@@ -38,21 +38,22 @@
 #include "ParallelDispatcher.hpp"
 #include "YieldCollaborator.hpp"
 
-class MM_OSInterface;
 class MM_EnvironmentBase;
-class MM_EnvironmentRealtime;
-class MM_MemorySubSpaceMetronome;
-class MM_Metronome;
-class MM_RealtimeGC;
-class MM_MetronomeAlarmThread;
-class MM_Timer;
-class MM_UtilizationTracker;
 
 #define METRONOME_GC_ON 1
 #define METRONOME_GC_OFF 0
 
 namespace OMR
 {
+
+class MM_EnvironmentRealtime;
+class MM_MemorySubSpaceMetronome;
+class MM_Metronome;
+class MM_MetronomeAlarmThread;
+class MM_OSInterface;
+class MM_RealtimeGC;
+class MM_Timer;
+class MM_UtilizationTracker;
 
 /**
  * @todo Provide class documentation

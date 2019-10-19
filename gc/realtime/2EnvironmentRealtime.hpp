@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if !defined(ENVIRONMENTREALTIME_HPP_)
-#define ENVIRONMENTREALTIME_HPP_
+#if !defined(OMR_ENVIRONMENTREALTIME_HPP_)
+#define OMR_ENVIRONMENTREALTIME_HPP_
 
 #include "Base.hpp"
 #include "EnvironmentBase.hpp"
@@ -29,13 +29,13 @@
 #include "OSInterface.hpp"
 #include "Scheduler.hpp"
 
+namespace OMR
+{
+
 class MM_AllocationContextRealtime;
 class MM_HeapRegionDescriptorRealtime;
 class MM_RealtimeRootScanner;
 class MM_Timer;
-
-namespace OMR
-{
 
 class MM_EnvironmentRealtime : public MM_EnvironmentBase
 {
@@ -164,6 +164,5 @@ private:
 
 } /* namespace OMR */
 
-#endif /* ENVIRONMENTREALTIME_HPP_ */
-
+#endif /* OMR_ENVIRONMENTREALTIME_HPP_ */
 

@@ -25,11 +25,11 @@
 
 #include "Metronome.hpp"
 
-namespace OMR
-{
-
 class MM_EnvironmentBase;
 class MM_OSInterface;
+
+namespace OMR
+{
 
 class MM_Timer : public MM_BaseVirtual
 {

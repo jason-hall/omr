@@ -30,10 +30,11 @@
 
 class MM_EnvironmentBase;
 class MM_MarkMap;
-class MM_Scheduler;
 
 namespace OMR
 {
+
+class MM_Scheduler;
 
 class MM_SweepSchemeRealtime : public MM_SweepSchemeSegregated
 {

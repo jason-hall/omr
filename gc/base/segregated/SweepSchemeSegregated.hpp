@@ -36,7 +36,6 @@
 #define MAX_REGION_COALESCE 500
 
 class MM_EnvironmentBase;
-class MM_EnvironmentRealtime;
 class MM_HeapRegionDescriptorSegregated;
 class MM_MarkMap;
 class MM_MemoryPoolSegregated;

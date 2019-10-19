@@ -31,10 +31,10 @@
 
 #if defined(OMR_GC_REALTIME)
 
+class MM_EnvironmentBase;
+
 namespace OMR
 {
-
-class MM_EnvironmentBase;
 
 class MM_HeapRegionDescriptorRealtime : public MM_HeapRegionDescriptorSegregated
 {

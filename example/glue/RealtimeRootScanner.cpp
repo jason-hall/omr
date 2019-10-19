@@ -31,6 +31,9 @@
 
 #include <string.h>
 
+namespace OMR
+{
+
 /**
  * This function iterates through all the threads, calling scanOneThread on each one that
  * should be scanned.  The scanOneThread function scans exactly one thread and returns
@@ -146,6 +149,8 @@ MM_RealtimeRootScanner::condYield(U_64 timeSlackNanoSec)
 	_yieldCount = ROOT_GRANULARITY;
 	return yielded;
 }
+
+} /* namespace OMR */
 
 #endif  /* defined(OMR_GC_REALTIME) */
 

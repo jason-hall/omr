@@ -32,6 +32,9 @@
 #include "EnvironmentBase.hpp"
 #include "GCExtensionsBase.hpp"
 
+namespace OMR
+{
+
 class MM_EnvironmentRealtime;
 
 class MM_MetronomeDelegate : public MM_BaseNonVirtual
@@ -133,6 +136,8 @@ public:
 	 */
 	friend class MM_RealtimeGC;
 };
+
+} /* namespace OMR */
 
 #endif /* defined(OMR_GC_REALTIME) */
 

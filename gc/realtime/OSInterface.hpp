@@ -32,8 +32,6 @@
 #include "GCExtensionsBase.hpp"
 
 class MM_EnvironmentBase;
-class MM_OSInterface;
-class MM_ProcessorInfo;
 
 #if defined(WIN32)
 #define SCHED_RR 0
@@ -42,6 +40,9 @@ class MM_ProcessorInfo;
 
 namespace OMR
 {
+
+class MM_OSInterface;
+class MM_ProcessorInfo;
 	
 /**
  * @todo Provide class documentation

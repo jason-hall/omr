@@ -23,16 +23,17 @@
 #if !defined(REALTIMESWEEPTASK_HPP_)
 #define REALTIMESWEEPTASK_HPP_
 
-namespace OMR
-{
-
 #include "omr.h"
 #include "omrcfg.h"
 
 #include "IncrementalParallelTask.hpp"
 
-class MM_Dispatcher;
 class MM_EnvironmentBase;
+
+namespace OMR
+{
+
+class MM_Dispatcher;
 class MM_SweepSchemeRealtime;
 
 /**

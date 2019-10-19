@@ -30,8 +30,6 @@
  */
 
 class MM_EnvironmentBase;
-class MM_ProcessorInfo;
-class MM_MetronomeAlarmThread;
 
 #include "omr.h"
 #include "omrcfg.h"
@@ -49,6 +47,9 @@ class MM_MetronomeAlarmThread;
 
 namespace OMR
 {
+
+class MM_ProcessorInfo;
+class MM_MetronomeAlarmThread;
 
  /**
  * MM_Alarm
