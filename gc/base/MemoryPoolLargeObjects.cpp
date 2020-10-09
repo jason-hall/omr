@@ -552,11 +552,16 @@ uintptr_t
 MM_MemoryPoolLargeObjects::getAvailableContractionSizeForRangeEndingAt(MM_EnvironmentBase* env, MM_AllocateDescription* allocDescription,
 																	   void* lowAddr, void* highAddr)
 {
+	uintptr_t availableContractionSize = 0;
 	if (highAddr >= _currentLOABase) {
-		return _memoryPoolLargeObjects->getAvailableContractionSizeForRangeEndingAt(env, allocDescription, lowAddr, highAddr);
+		availableContractionSize = _memoryPoolLargeObjects->getAvailableContractionSizeForRangeEndingAt(env, allocDescription, lowAddr, highAddr);
+		if (_loaSize == availableContractionSize) {
+			availableContractionSize += _memoryPoolSmallObjects->getAvailableContractionSizeForRangeEndingAt(env, allocDescription, lowAddr, highAddr);
+		}
 	} else {
-		return _memoryPoolSmallObjects->getAvailableContractionSizeForRangeEndingAt(env, allocDescription, lowAddr, highAddr);
+		availableContractionSize = _memoryPoolSmallObjects->getAvailableContractionSizeForRangeEndingAt(env, allocDescription, lowAddr, highAddr);
 	}
+	return availableContractionSize;
 }
 
 /**
