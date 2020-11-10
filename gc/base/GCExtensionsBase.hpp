@@ -1476,9 +1476,9 @@ public:
 		, heapExpansionMinimumSize(1024 * 1024)
 		, heapExpansionMaximumSize(0)
 		, heapFreeMinimumRatioDivisor(100)
-		, heapFreeMinimumRatioMultiplier(30)
+		, heapFreeMinimumRatioMultiplier(5)
 		, heapFreeMaximumRatioDivisor(100)
-		, heapFreeMaximumRatioMultiplier(60)
+		, heapFreeMaximumRatioMultiplier(10)
 		, heapExpansionGCTimeThreshold(13)
 		, heapContractionGCTimeThreshold(5)
 		, heapExpansionStabilizationCount(0)
@@ -1607,7 +1607,7 @@ public:
 		, aliasInhibitingThresholdPercentage(0.20)
 		, splitHeapSection(HEAP_INITIALIZATION_SPLIT_HEAP_UNKNOWN)
 #endif /* OMR_GC_MODRON_SCAVENGER */
-		, globalMaximumContraction(0.05) /* by default, contract must be at most 5% of the committed heap */
+		, globalMaximumContraction(0.07) /* by default, contract must be at most 5% of the committed heap */
 		, globalMinimumContraction(0.01) /* by default, contract must be at least 1% of the committed heap */
 		, excessiveGCEnabled()
 		, isRecursiveGC(false)
@@ -1709,7 +1709,7 @@ public:
 		, newThreadAllocationColor(0)
 		, minimumFreeEntrySize((uintptr_t)-1) /* -1 => user did not override default minimumFreeEntrySize */
 		, arrayletsPerRegion(0)
-		, verbose(0)
+		, verbose(1)
 		, debug(0)
 		, allocationTrackerMaxTotalError(UDATA_MAX)
 		, allocationTrackerMaxThreshold(128 * 1024) /* 128 KB */
