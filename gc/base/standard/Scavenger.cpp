@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -4619,10 +4619,29 @@ MM_Scavenger::internalGarbageCollect(MM_EnvironmentBase *envBase, MM_MemorySubSp
 bool
 MM_Scavenger::percolateGarbageCollect(MM_EnvironmentBase *env,  MM_MemorySubSpace *subSpace, MM_AllocateDescription *allocDescription, PercolateReason percolateReason, uint32_t gcCode)
 {
+	OMRPORT_ACCESS_FROM_ENVIRONMENT(env);
+
 	/* save the cycle state since we are about to call back into the collector to start a new global cycle */
 	MM_CycleState *scavengeCycleState = env->_cycleState;
 	Assert_MM_true(NULL != scavengeCycleState);
 	env->_cycleState = NULL;
+
+	/* Pause GC CPU time. */
+	if (CRITICAL_REGIONS == percolateReason) {
+		if (J9_EVENT_IS_HOOKED(_extensions->privateHookInterface, J9HOOK_MM_PRIVATE_ALLOCATION_FAILURE_CYCLE_END)) {
+			MM_CommonGCEndData commonData;
+			_extensions->heap->initializeCommonGCEndData(env, &commonData);
+
+			ALWAYS_TRIGGER_J9HOOK_MM_PRIVATE_ALLOCATION_FAILURE_CYCLE_END(
+				_extensions->privateHookInterface,
+				env->getOmrVMThread(),
+				omrtime_hires_clock(),
+				J9HOOK_MM_PRIVATE_ALLOCATION_FAILURE_CYCLE_END,
+				env->getExclusiveAccessTime(),
+				subSpace->getTypeFlags(),
+				&commonData);
+		}
+	}
 
 	/* Set last percolate reason */
 	_extensions->heap->getPercolateStats()->setLastPercolateReason(percolateReason);
@@ -4635,6 +4654,17 @@ MM_Scavenger::percolateGarbageCollect(MM_EnvironmentBase *env,  MM_MemorySubSpac
 
 	if (result) {
 		_extensions->heap->getPercolateStats()->clearScavengesSincePercolate();
+	}
+
+	/* Resume GC CPU time. */
+	if (CRITICAL_REGIONS == percolateReason) {
+		TRIGGER_J9HOOK_MM_PRIVATE_ACQUIRED_EXCLUSIVE_TO_SATISFY_ALLOCATION(
+			_extensions->privateHookInterface,
+			env->getOmrVMThread(),
+			omrtime_hires_clock(),
+			J9HOOK_MM_PRIVATE_ALLOCATION_FAILURE_CYCLE_START,
+			allocDescription->getBytesRequested(),
+			subSpace->getTypeFlags());
 	}
 
 	/* restore the cycle state to maintain symmetry */
